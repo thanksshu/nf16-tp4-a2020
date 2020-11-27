@@ -4,12 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX_WORD_LENTH 65
+
 typedef struct t_position
 {
     int numero_ligne;           // in which line
     int numero_phrase;          // in which phrase
-    int ordre_ligne;            // order in line !mod!
-    int ordre_phrase;           // order in phrase !mod!
+    int ordre_ligne;            // order in line ! mod !
+    int ordre_phrase;           // order in phrase ! mod !
     struct t_position *suivant; // next appearance
 } t_Position;
 
@@ -38,7 +40,7 @@ typedef struct t_index
 //cette fonction créée une liste de position vide
 t_ListePosition *creer_liste_positions();
 
-//cette fonction ajoute un nouvel element dans une liste de position triée, !mod!
+//cette fonction ajoute un nouvel element dans une liste de position triée, ! mod !
 int ajouter_position(t_ListePosition *liste_position,
                      int numero_ligne, int numero_phrase,
                      int ordre_ligne, int ordre_phrase);

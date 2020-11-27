@@ -64,6 +64,7 @@ int ajouter_position(t_ListePosition *liste_position,
         liste_position->debut = pos;
     }
 
+    // element number +1
     liste_position->nb_elements += 1;
     return 1;
 }
@@ -86,7 +87,7 @@ t_Index *creer_index()
 //cette fonction recherche un mot dans un index
 t_Noeud *rechercher_mot(t_Index *index, char *mot)
 {
-    t_Noeud * ptrnoeud;
+    t_Noeud *ptrnoeud;
     ptrnoeud = index->racine;
     return recherche_appronfondie(ptrnoeud, mot);
 }
@@ -98,8 +99,65 @@ int ajouter_noeud(t_Index *index, t_Noeud *noeud)
 }
 
 //cette fonction permet d'indexer un fichier lu
-int indexer_fichier(t_Index *index, char *filename)
+int indexer_fichier(t_Index *index, char *file_name)
 {
+    // open file
+    FILE *file = fopen(file_name, "r");
+    if (!file)
+    {
+        // file not exists, no word read
+        return 0;
+    }
+
+    // read char one by one
+    int line_word_order = 0, phrase_word_order = 0,
+        line_count = 0, phrase_count = 0, word_count = 0;
+    char character = (char)fgetc(file);
+    // init a empty string
+    char word[MAX_WORD_LENTH];
+    memset(word, '\0', sizeof(word));
+    while (character != EOF)
+    {
+        switch (character)
+        {
+        case ' ':
+            // is space, a word ends
+
+            word_count += 1;
+            line_word_order += 1;
+            phrase_word_order += 1;
+            memset(word, '\0', sizeof(word)); // reset word
+            break;
+        case '.':
+            // is space, a phrase ends as well as a word
+
+            // word end
+            word_count += 1;
+            line_word_order += 1;
+            phrase_word_order += 1;
+            // phrase end
+            phrase_count += 1;
+            memset(word, '\0', sizeof(word)); // reset word
+            // skip next space
+            character = (char)fgetc(file);
+            break;
+        case '\n':
+            // is new line, a line ends as well as a word
+
+            word_count += 1;
+            line_count += 1;
+            memset(word, '\0', sizeof(word)); // reset word
+            break;
+        default:
+            // a character in a word
+            word[strlen(word)] = character;
+            break;
+        }
+
+        // read a new character
+        character = (char)fgetc(file);
+    }
+
     return;
 }
 
@@ -119,13 +177,13 @@ void make_word_lower(char *mot)
         {
             *ptrchar = *ptrchar + 32;
         }
-        ptrchar ++;
+        ptrchar++;
     }
 }
 
 t_Noeud *recherche_appronfondie(t_Noeud *ptrnoeud, char *word)
 {
-    t_Noeud * ptrn;
+    t_Noeud *ptrn;
     char *copyword;
 
     strcpy(copyword, word);
@@ -143,7 +201,6 @@ t_Noeud *recherche_appronfondie(t_Noeud *ptrnoeud, char *word)
         return ptrn;
     }
 }
-
 
 //Cette fonction affiche le menu
 void affichageMenu()
