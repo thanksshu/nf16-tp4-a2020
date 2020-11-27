@@ -61,14 +61,34 @@ t_Index *creer_index()
 t_Noeud *rechercher_mot(t_Index *index, char *mot)
 {
     t_Noeud * ptrnoeud;
+    if (IndexNotFound(index))
+    {
+        return NULL;
+    }
+    if (mot == NULL);
+    {
+        printf("Recherche impossible, probleme avec le mot entre!");
+        return NULL;
+    }
     ptrnoeud = index->racine;
     return recherche_appronfondie(ptrnoeud, mot);
 }
 
-//cette fonction permet d'ajouter un noeud dans l'index
+//cette fonction permet d'ajouter un noeud dans l'index, avec detection integree
 int ajouter_noeud(t_Index *index, t_Noeud *noeud)
 {
-    return 1;
+    int flag; //When the addition is successful,flag values 1
+    if (IndexNotFound(index))
+    {
+        return 0;
+    }
+    if (NoeudNotFound(noeud))
+    {
+        return 0;
+    } 
+    flag = 0;
+    ajouter_noeud_approfondie(index->racine, noeud, &flag);
+    return flag;
 }
 
 //cette fonction permet d'indexer un fichier lu
@@ -118,6 +138,64 @@ t_Noeud *recherche_appronfondie(t_Noeud *ptrnoeud, char *word)
     }
 }
 
+//ajouter un noeud de maniere recurrence
+void ajouter_noeud_approfondie(t_Noeud *ptrnb, t_Noeud *nouveau, int *ajouteflag)
+{
+    if (ptrnb->mot < nouveau->mot)
+    {
+        if (ptrnb->filsDroit != NULL)
+        {
+            ajouter_noeud_approfondie(ptrnb->filsDroit, nouveau, ajouteflag);
+        }
+        if (ptrnb->filsDroit == NULL)
+        {
+            ptrnb->filsDroit = nouveau;
+            *ajouteflag = 1;
+        }
+    }
+    if (ptrnb->mot > nouveau->mot)
+    {
+        if (ptrnb->filsGauche != NULL)
+        {
+            ajouter_noeud_approfondie(ptrnb->filsGauche, nouveau, ajouteflag);
+        }
+        if (ptrnb->filsGauche == NULL)
+        {
+            ptrnb->filsGauche = nouveau;
+            *ajouteflag = 1;
+        }
+    }
+}
+
+//This function for creation of a new node
+t_Noeud *create_noeud(char *mot,t_ListePosition *position)
+{
+    t_Noeud *nouveau = (t_Noeud *)malloc(sizeof(t_Noeud));
+    strcpy(nouveau->mot, mot);
+    nouveau->filsDroit = nouveau->filsGauche = NULL;
+    nouveau->positions = position;
+    nouveau->nb_occurences = 0;
+}
+
+int IndexNotFound(t_Index *ptrindex)
+{
+    if (ptrindex == NULL)
+    {
+        printf("Pas d'index!!");
+        return 1; 
+    }
+    return 0;
+}
+
+int NoeudNotFound(t_Noeud *ptrn)
+{
+    if (ptrn == NULL)
+    {
+        printf("Noeud ajoutee n'exits pas!!");
+        return 1;
+    }
+    return 0;
+}
 
 //Cette fonction affiche le menu
 void affichageMenu()
