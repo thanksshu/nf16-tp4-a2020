@@ -11,9 +11,9 @@ Lien vers la documentation C
 */
 
 //cette fonction créée une liste de positions vide
-t_ListePositions *creer_liste_positions()
+t_ListePosition *creer_liste_positions()
 {
-    t_ListesPosition *listeP = (t_ListesPosition *)malloc(sizeof(t_ListesPosition));
+    t_ListePosition *listeP = (t_ListePosition *)malloc(sizeof(t_ListePosition));
     if (!listeP)
     {
         printf("Erreur de creation de la liste de positions !\n");
@@ -25,9 +25,9 @@ t_ListePositions *creer_liste_positions()
 }
 
 //cette fonction ajoute un nouvel element dans une liste de position triée
-int ajouter_position(t_ListePositions *listeP, int ligne, int ordre, int num_phrase)
+int ajouter_position(t_ListePosition *listeP, int ligne, int ordre, int num_phrase)
 {
-    t_ListePositions *list = listeP;
+    t_ListePosition *list = listeP;
     t_Position *newPos = (t_Position *)malloc(sizeof(t_Position));
     if (!newPos)
     {
