@@ -6,17 +6,17 @@
 
 typedef struct t_position
 {
-    int numero_ligne;
-    int ordre;
-    int numero_phrase;
-    struct t_position *suivant;
+    int numero_ligne;           // in which line
+    int numero_phrase;          // in which phrase
+    int ordre_ligne;            // order in line !mod!
+    int ordre_phrase;           // order in phrase !mod!
+    struct t_position *suivant; // next appearance
 } t_Position;
 
 typedef struct t_ListesPosition
 {
     t_Position *debut;
     int nb_elements;
-    struct t_ListesPosition *suivant;
 } t_ListePosition;
 
 typedef struct t_noeud
@@ -38,8 +38,10 @@ typedef struct t_index
 //cette fonction créée une liste de position vide
 t_ListePosition *creer_liste_positions();
 
-//cette fonction ajoute un nouvel element dans une liste de position triée
-int ajouter_position(t_ListePosition *listeP, int ligne, int ordre, int num_phrase);
+//cette fonction ajoute un nouvel element dans une liste de position triée, !mod!
+int ajouter_position(t_ListePosition *liste_position,
+                     int numero_ligne, int numero_phrase,
+                     int ordre_ligne, int ordre_phrase);
 
 //cette fonction créée un index vide
 t_Index *creer_index();

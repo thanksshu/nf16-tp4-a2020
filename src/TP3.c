@@ -1,16 +1,6 @@
 #include "../include/TP3.h"
 
-/*
-Conseil pour la manipulation des chaines de caractères.
-Les bibliothèques C contiennent plusieurs fonctions qui vous seront utiles lors du TP, vous avez <ctype.h> pour les fonctions sur les caractères et <string.h> pour les chaines de caractères.
-Avant d'implémenter vos propres traitements sur les chaines de caractères,  vérifiez s'il existe des fonctions C qui le font. Ca vous éviteras du travail en plus.
-Si elles ne sont pas dans ces deux bibliothèques, elle peuvent être dans une autre.
-Google, stackoverflow et la documentation du langage C sont vos amis
-https://fr.cppreference.com/w/c
-Lien vers la documentation C
-*/
-
-//cette fonction créée une liste de positions vide
+// cette fonction créée une liste de positions vide
 t_ListePosition *creer_liste_positions()
 {
     t_ListePosition *listeP = (t_ListePosition *)malloc(sizeof(t_ListePosition));
@@ -24,25 +14,61 @@ t_ListePosition *creer_liste_positions()
     return listeP;
 }
 
-//cette fonction ajoute un nouvel element dans une liste de position triée
-int ajouter_position(t_ListePosition *listeP, int ligne, int ordre, int num_phrase)
+// cette fonction ajoute un nouvel element dans une liste de position triée
+int ajouter_position(t_ListePosition *liste_position,
+                     int numero_ligne, int numero_phrase,
+                     int ordre_ligne, int ordre_phrase)
 {
-    t_ListePosition *list = listeP;
-    t_Position *newPos = (t_Position *)malloc(sizeof(t_Position));
-    if (!newPos)
+    // allocate a new t_position
+    t_Position *pos = (t_Position *)calloc(1, sizeof(t_Position));
+    if (!pos)
     {
         printf("Erreur de creation du nouvel element! !\n");
         return 0;
     }
-    newPos->numero_ligne = ligne;
-    newPos->numero_phrase = num_phrase;
-    newPos->ordre = ordre;
-    //newPos->suivant
+    pos->numero_ligne = numero_ligne;
+    pos->numero_phrase = numero_phrase;
+    pos->ordre_ligne = ordre_ligne;
+    pos->ordre_phrase = ordre_phrase;
 
+    // check if list have a t_position
+    if (liste_position->debut)
+    {
+        // already have one
+        t_Position *temp_pos = liste_position->debut;
+
+        // to the end of list
+        while (temp_pos->suivant)
+        {
+            temp_pos = temp_pos->suivant;
+        }
+
+        // check if orders are correct
+        if ((temp_pos->numero_ligne <= pos->numero_ligne) &&
+            (temp_pos->numero_phrase <= pos->numero_phrase) &&
+            (temp_pos->ordre_ligne <= pos->ordre_ligne) &&
+            (temp_pos->ordre_phrase <= pos->ordre_phrase))
+        {
+            // right
+            temp_pos->suivant = pos;
+        }
+        else
+        {
+            // not right
+            return 0;
+        }
+    }
+    else
+    {
+        // nope
+        liste_position->debut = pos;
+    }
+
+    liste_position->nb_elements += 1;
     return 1;
 }
 
-//cette fonction créée un index vide
+// cette fonction créée un index vide
 t_Index *creer_index()
 {
     t_Index *index = (t_Index *)malloc(sizeof(t_Index));
