@@ -58,6 +58,11 @@ int indexer_fichier(t_Index *index, char *filename);
 //cette fonction affiche les mots classés par ordre alphabétique
 void afficher_index(t_Index *index);
 
+/*other functions*/
+void make_word_lower(char *mot);
+
+t_Noeud *recherche_appronfondie(t_Noeud *ptrnoeud, char *word);
+
 //Cette fonction affiche le menu
 void affichageMenu();
 

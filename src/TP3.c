@@ -86,7 +86,9 @@ t_Index *creer_index()
 //cette fonction recherche un mot dans un index
 t_Noeud *rechercher_mot(t_Index *index, char *mot)
 {
-    return;
+    t_Noeud * ptrnoeud;
+    ptrnoeud = index->racine;
+    return recherche_appronfondie(ptrnoeud, mot);
 }
 
 //cette fonction permet d'ajouter un noeud dans l'index
@@ -105,6 +107,43 @@ int indexer_fichier(t_Index *index, char *filename)
 void afficher_index(t_Index *index)
 {
 }
+
+/*other functions*/
+void make_word_lower(char *mot)
+{
+    char *ptrchar;
+    ptrchar = mot;
+    while (ptrchar != '/0')
+    {
+        if (*ptrchar < 91 && *ptrchar > 64)
+        {
+            *ptrchar = *ptrchar + 32;
+        }
+        ptrchar ++;
+    }
+}
+
+t_Noeud *recherche_appronfondie(t_Noeud *ptrnoeud, char *word)
+{
+    t_Noeud * ptrn;
+    char *copyword;
+
+    strcpy(copyword, word);
+    make_word_lower(copyword);
+    if (strcmp(copyword, ptrn->mot) > 0)
+    {
+        return recherche_appronfondie(ptrn->filsDroit, word);
+    }
+    else if (strcmp(copyword, ptrn->mot) < 0)
+    {
+        return recherche_appronfondie(ptrn->filsGauche, word);
+    }
+    if (strcmp(copyword, ptrn->mot) == 0)
+    {
+        return ptrn;
+    }
+}
+
 
 //Cette fonction affiche le menu
 void affichageMenu()
