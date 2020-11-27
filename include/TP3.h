@@ -65,6 +65,14 @@ void make_word_lower(char *mot);
 
 t_Noeud *recherche_appronfondie(t_Noeud *ptrnoeud, char *word);
 
+int IndexNotFound(t_Index *ptrindex);
+
+int NoeudNotFound(t_Noeud *ptrn);
+
+t_Noeud *create_noeud(char *mot,t_ListePosition *position);
+
+void ajouter_noeud_approfondie(t_Noeud *racine, t_Noeud *nouveau, int *ajouteflag);
+
 //Cette fonction affiche le menu
 void affichageMenu();
 
