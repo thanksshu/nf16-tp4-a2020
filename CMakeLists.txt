@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(TP4 C)
 set(CMAKE_C_STANDARD 99)
-file(GLOB HEADER include/*.h)
+file(GLOB HEADER include/)
 file(GLOB SOURCE src/*.c)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_HOME_DIRECTORY}/bin)
 

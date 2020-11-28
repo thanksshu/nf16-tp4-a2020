@@ -6,31 +6,31 @@
 
 #define MAX_WORD_LENTH 65
 
-typedef struct t_position
+typedef struct Position
 {
-    int numero_ligne;           // in which line
-    int numero_phrase;          // in which phrase
-    int ordre_ligne;            // order in line ! mod !
-    int ordre_phrase;           // order in phrase ! mod !
-    struct t_position *suivant; // next appearance
+    int numero_ligne;         // in which line
+    int numero_phrase;        // in which phrase
+    int ordre_ligne;          // order in line ! mod !
+    int ordre_phrase;         // order in phrase ! mod !
+    struct Position *suivant; // next appearance
 } t_Position;
 
-typedef struct t_ListesPosition
+typedef struct ListesPosition
 {
     t_Position *debut;
     int nb_elements;
 } t_ListePosition;
 
-typedef struct t_noeud
+typedef struct Noeud
 {
     char *mot;
     int nb_occurences;
     t_ListePosition *positions;
-    t_Noeud *filsGauche;
-    t_Noeud *filsDroit;
+    struct Noeud *filsGauche;
+    struct Noeud *filsDroit;
 } t_Noeud;
 
-typedef struct t_index
+typedef struct Index
 {
     t_Noeud *racine;
     int nb_mots_differents;
@@ -69,7 +69,7 @@ int IndexNotFound(t_Index *ptrindex);
 
 int NoeudNotFound(t_Noeud *ptrn);
 
-t_Noeud *create_noeud(char *mot,t_ListePosition *position);
+t_Noeud *create_noeud(char *mot, t_ListePosition *position);
 
 void ajouter_noeud_approfondie(t_Noeud *racine, t_Noeud *nouveau, int *ajouteflag);
 

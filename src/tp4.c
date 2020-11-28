@@ -1,4 +1,4 @@
-#include "../include/TP3.h"
+#include "../include/tp4.h"
 
 // cette fonction créée une liste de positions vide
 t_ListePosition *creer_liste_positions()
@@ -19,7 +19,7 @@ int ajouter_position(t_ListePosition *liste_position,
                      int numero_ligne, int numero_phrase,
                      int ordre_ligne, int ordre_phrase)
 {
-    // allocate a new t_position
+    // allocate a new t_Position
     t_Position *pos = (t_Position *)calloc(1, sizeof(t_Position));
     if (!pos)
     {
@@ -31,7 +31,7 @@ int ajouter_position(t_ListePosition *liste_position,
     pos->ordre_ligne = ordre_ligne;
     pos->ordre_phrase = ordre_phrase;
 
-    // check if list have a t_position
+    // check if list have a t_Position
     if (liste_position->debut)
     {
         // already have one
@@ -87,12 +87,13 @@ t_Index *creer_index()
 //cette fonction recherche un mot dans un index
 t_Noeud *rechercher_mot(t_Index *index, char *mot)
 {
-    t_Noeud * ptrnoeud;
+    t_Noeud *ptrnoeud;
     if (IndexNotFound(index))
     {
         return NULL;
     }
-    if (mot == NULL);
+    if (mot == NULL)
+        ;
     {
         printf("Recherche impossible, probleme avec le mot entre!");
         return NULL;
@@ -112,7 +113,7 @@ int ajouter_noeud(t_Index *index, t_Noeud *noeud)
     if (NoeudNotFound(noeud))
     {
         return 0;
-    } 
+    }
     flag = 0;
     ajouter_noeud_approfondie(index->racine, noeud, &flag);
     return flag;
@@ -132,41 +133,55 @@ int indexer_fichier(t_Index *index, char *file_name)
     // read char one by one
     int line_word_order = 0, phrase_word_order = 0,
         line_count = 0, phrase_count = 0, word_count = 0;
-    char character = (char)fgetc(file);
     // init a empty string
     char word[MAX_WORD_LENTH];
     memset(word, '\0', sizeof(word));
+    // start pick character
+    char character = (char)fgetc(file);
     while (character != EOF)
     {
         switch (character)
         {
         case ' ':
-            // is space, a word ends
+            // is space
+            printf("%s\n", word);
 
+            // word end
             word_count += 1;
             line_word_order += 1;
             phrase_word_order += 1;
             memset(word, '\0', sizeof(word)); // reset word
             break;
         case '.':
-            // is space, a phrase ends as well as a word
+            // is space
+            printf("%s\n", word);
 
             // word end
             word_count += 1;
             line_word_order += 1;
             phrase_word_order += 1;
-            // phrase end
-            phrase_count += 1;
             memset(word, '\0', sizeof(word)); // reset word
+
+            // phrase ends
+            phrase_count += 1;
+            phrase_word_order = 0;
+
             // skip next space
             character = (char)fgetc(file);
             break;
         case '\n':
-            // is new line, a line ends as well as a word
+            // is new line
+            printf("%s\n", word);
 
+            // word ends
             word_count += 1;
-            line_count += 1;
+            line_word_order += 1;
+            phrase_word_order += 1;
             memset(word, '\0', sizeof(word)); // reset word
+
+            // line ends
+            line_count += 1;
+            line_word_order = 0;
             break;
         default:
             // a character in a word
@@ -178,7 +193,7 @@ int indexer_fichier(t_Index *index, char *file_name)
         character = (char)fgetc(file);
     }
 
-    return;
+    return word_count;
 }
 
 //cette fonction affiche les mots classés par ordre alphabétique
@@ -190,8 +205,8 @@ void afficher_index(t_Index *index)
 void make_word_lower(char *mot)
 {
     char *ptrchar;
-    ptrchar = mot;
-    while (ptrchar != '/0')
+    strcpy(ptrchar, mot);
+    while (*ptrchar != '\0')
     {
         if (*ptrchar < 91 && *ptrchar > 64)
         {
@@ -252,7 +267,7 @@ void ajouter_noeud_approfondie(t_Noeud *ptrnb, t_Noeud *nouveau, int *ajouteflag
 }
 
 //This function for creation of a new node
-t_Noeud *create_noeud(char *mot,t_ListePosition *position)
+t_Noeud *create_noeud(char *mot, t_ListePosition *position)
 {
     t_Noeud *nouveau = (t_Noeud *)malloc(sizeof(t_Noeud));
     strcpy(nouveau->mot, mot);
@@ -266,7 +281,7 @@ int IndexNotFound(t_Index *ptrindex)
     if (ptrindex == NULL)
     {
         printf("Pas d'index!!");
-        return 1; 
+        return 1;
     }
     return 0;
 }
@@ -318,6 +333,7 @@ void menuPrincipal(void)
             //cette boucle est juste là pour permettre à l'utilisateur de rentrer un nom de fichier correct afin de pouvoir importer
             while (1)
             {
+                char char_input[64];
                 printf("Veuillez saisir le nom du fichier d'une instance:\n");
                 scanf("%s", char_input);
                 f = fopen(char_input, "r");
