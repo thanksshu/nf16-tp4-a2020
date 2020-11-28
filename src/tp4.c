@@ -146,6 +146,8 @@ int indexer_fichier(t_Index *index, char *file_name)
             // is space
             printf("%s\n", word);
 
+            traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order);
+
             // word end
             word_count += 1;
             line_word_order += 1;
@@ -156,15 +158,18 @@ int indexer_fichier(t_Index *index, char *file_name)
             // is space
             printf("%s\n", word);
 
+            // phrase ends
+            phrase_count += 1;
+            phrase_word_order = 0;
+
+            traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order);
+
             // word end
             word_count += 1;
             line_word_order += 1;
             phrase_word_order += 1;
             memset(word, '\0', sizeof(word)); // reset word
 
-            // phrase ends
-            phrase_count += 1;
-            phrase_word_order = 0;
 
             // skip next space
             character = (char)fgetc(file);
@@ -173,15 +178,18 @@ int indexer_fichier(t_Index *index, char *file_name)
             // is new line
             printf("%s\n", word);
 
+            // line ends
+            line_count += 1;
+            line_word_order = 0;
+            
+            traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order); 
+
             // word ends
             word_count += 1;
             line_word_order += 1;
             phrase_word_order += 1;
             memset(word, '\0', sizeof(word)); // reset word
 
-            // line ends
-            line_count += 1;
-            line_word_order = 0;
             break;
         default:
             // a character in a word
@@ -266,7 +274,7 @@ void ajouter_noeud_approfondie(t_Noeud *ptrnb, t_Noeud *nouveau, int *ajouteflag
     }
 }
 
-//This function for creation of a new node
+//This function if for creation of a new node
 t_Noeud *create_noeud(char *mot, t_ListePosition *position)
 {
     t_Noeud *nouveau = (t_Noeud *)malloc(sizeof(t_Noeud));
@@ -275,6 +283,35 @@ t_Noeud *create_noeud(char *mot, t_ListePosition *position)
     nouveau->positions = position;
     nouveau->nb_occurences = 0;
 }
+
+
+/*Function for treatment of a word when we create a index of a file*/
+void traitement_word(t_Index *index, char *word, int line_count, int line_word_order, int phrase_count, int phrase_word_order)
+{
+    t_Noeud *nouveau, *trouve;
+    t_ListePosition *nliste;
+    int ajoutflag;
+    trouve = rechercher_mot(index, word);
+    if (trouve)
+    {
+        if (!(ajouter_position(trouve->positions, line_count, phrase_count, line_word_order, phrase_word_order)))
+        {
+            printf("Echec de l'ajout de la position!");
+        }
+    }
+    else if (!trouve)
+    {
+        nliste = (t_ListePosition *)malloc(sizeof(t_ListePosition));
+        nouveau = create_noeud(word, nliste);
+        ajoutflag = ajouter_noeud(index, nouveau);
+        if (!ajoutflag)
+        {
+            printf("Echec de l'ajout du noeud!");
+        }
+    }
+    
+}
+
 
 int IndexNotFound(t_Index *ptrindex)
 {

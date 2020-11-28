@@ -73,6 +73,8 @@ t_Noeud *create_noeud(char *mot, t_ListePosition *position);
 
 void ajouter_noeud_approfondie(t_Noeud *racine, t_Noeud *nouveau, int *ajouteflag);
 
+void traitement_word(t_Index *index, char *word, int line_count, int line_word_order, int phrase_count, int phrase_word_order);
+
 //Cette fonction affiche le menu
 void affichageMenu();
 
