@@ -93,7 +93,6 @@ t_Noeud *rechercher_mot(t_Index *index, char *mot)
         return NULL;
     }
     if (mot == NULL)
-        ;
     {
         printf("Recherche impossible, probleme avec le mot entre!");
         return NULL;
@@ -127,6 +126,7 @@ int indexer_fichier(t_Index *index, char *file_name)
     if (!file)
     {
         // file not exists, no word read
+        printf("error read\n");
         return 0;
     }
 
@@ -164,12 +164,9 @@ int indexer_fichier(t_Index *index, char *file_name)
 
             traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order);
 
-            // word end
-            word_count += 1;
             line_word_order += 1;
             phrase_word_order += 1;
             memset(word, '\0', sizeof(word)); // reset word
-
 
             // skip next space
             character = (char)fgetc(file);
@@ -181,8 +178,8 @@ int indexer_fichier(t_Index *index, char *file_name)
             // line ends
             line_count += 1;
             line_word_order = 0;
-            
-            traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order); 
+
+            traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order);
 
             // word ends
             word_count += 1;
@@ -212,7 +209,8 @@ void afficher_index(t_Index *index)
 /*other functions*/
 void make_word_lower(char *mot)
 {
-    char *ptrchar;
+    char temp_mot[strlen(mot) + 1];
+    char *ptrchar = temp_mot;
     strcpy(ptrchar, mot);
     while (*ptrchar != '\0')
     {
@@ -222,12 +220,14 @@ void make_word_lower(char *mot)
         }
         ptrchar++;
     }
+
+    strcpy(mot, ptrchar);
 }
 
 t_Noeud *recherche_appronfondie(t_Noeud *ptrnoeud, char *word)
 {
     t_Noeud *ptrn;
-    char *copyword;
+    char copyword[strlen(word) + 1];
 
     strcpy(copyword, word);
     make_word_lower(copyword);
@@ -278,12 +278,12 @@ void ajouter_noeud_approfondie(t_Noeud *ptrnb, t_Noeud *nouveau, int *ajouteflag
 t_Noeud *create_noeud(char *mot, t_ListePosition *position)
 {
     t_Noeud *nouveau = (t_Noeud *)malloc(sizeof(t_Noeud));
+    nouveau->mot = (char *)malloc(MAX_WORD_LENTH);
     strcpy(nouveau->mot, mot);
     nouveau->filsDroit = nouveau->filsGauche = NULL;
     nouveau->positions = position;
     nouveau->nb_occurences = 0;
 }
-
 
 /*Function for treatment of a word when we create a index of a file*/
 void traitement_word(t_Index *index, char *word, int line_count, int line_word_order, int phrase_count, int phrase_word_order)
@@ -309,9 +309,7 @@ void traitement_word(t_Index *index, char *word, int line_count, int line_word_o
             printf("Echec de l'ajout du noeud!");
         }
     }
-    
 }
-
 
 int IndexNotFound(t_Index *ptrindex)
 {
