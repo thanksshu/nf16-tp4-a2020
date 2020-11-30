@@ -111,7 +111,15 @@ int ajouter_noeud(t_Index *index, t_Noeud *noeud)
         return 0;
     }
     flag = 0;
-    ajouter_noeud_approfondie(index->racine, noeud, &flag);
+    if (index->racine == NULL)
+    {
+        index->racine = noeud;
+        flag = 1;
+    }
+    else 
+    {
+        ajouter_noeud_approfondie(index->racine, noeud, &flag);
+    }
     return flag;
 }
 
