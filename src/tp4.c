@@ -219,7 +219,7 @@ void make_word_lower(char *mot)
 
 t_Noeud *recherche_appronfondie(t_Noeud *ptrn, char *word)
 {
-    if (ptrn = NULL)
+    if (ptrn == NULL)
     {
         return NULL;
     }
