@@ -89,7 +89,7 @@ t_Noeud *rechercher_mot(t_Index *index, char *mot)
 {
     t_Noeud *ptrnoeud;
 
-    if (index->racine = NULL)
+    if (index->racine == NULL)
     {
         return NULL;
     }
