@@ -88,13 +88,9 @@ t_Index *creer_index()
 t_Noeud *rechercher_mot(t_Index *index, char *mot)
 {
     t_Noeud *ptrnoeud;
-    if (IndexNotFound(index))
+
+    if (index->racine = NULL)
     {
-        return NULL;
-    }
-    if (mot == NULL)
-    {
-        printf("Recherche impossible, probleme avec le mot entre!");
         return NULL;
     }
     ptrnoeud = index->racine;
@@ -223,6 +219,10 @@ void make_word_lower(char *mot)
 
 t_Noeud *recherche_appronfondie(t_Noeud *ptrn, char *word)
 {
+    if (ptrn = NULL)
+    {
+        return NULL;
+    }
     if (strcmp(word, ptrn->mot) > 0)
     {
         return recherche_appronfondie(ptrn->filsDroit, word);
@@ -274,7 +274,7 @@ t_Noeud *create_noeud(char *mot, t_ListePosition *position)
     strcpy(nouveau->mot, mot);
     nouveau->filsDroit = nouveau->filsGauche = NULL;
     nouveau->positions = position;
-    nouveau->nb_occurences = 0;
+    nouveau->nb_occurences = 1;
 }
 
 /*Function for treatment of a word when we create a index of a file*/
@@ -283,6 +283,18 @@ void traitement_word(t_Index *index, char *word, int line_count, int line_word_o
     t_Noeud *nouveau, *trouve;
     t_ListePosition *nliste;
     int ajoutflag;
+
+    if (IndexNotFound(index))
+    {
+        printf("Pas d'index!");
+        return;
+    }
+    if (word == NULL)
+    {
+        printf("Recherche impossible, probleme avec le mot entre!");
+        return;
+    }
+
     trouve = rechercher_mot(index, word);
     if (trouve)
     {
@@ -290,10 +302,13 @@ void traitement_word(t_Index *index, char *word, int line_count, int line_word_o
         {
             printf("Echec de l'ajout de la position!");
         }
+        trouve->nb_occurences ++;
     }
     else if (!trouve)
     {
         nliste = (t_ListePosition *)malloc(sizeof(t_ListePosition));
+        nliste->nb_elements = 1;
+        ajouter_position(nliste, line_count, phrase_count, line_word_order, phrase_word_order);
         nouveau = create_noeud(word, nliste);
         ajoutflag = ajouter_noeud(index, nouveau);
         if (!ajoutflag)
