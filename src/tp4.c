@@ -98,6 +98,7 @@ t_Noeud *rechercher_mot(t_Index *index, char *mot)
         return NULL;
     }
     ptrnoeud = index->racine;
+    make_word_lower(mot);
     return recherche_appronfondie(ptrnoeud, mot);
 }
 
@@ -209,9 +210,7 @@ void afficher_index(t_Index *index)
 /*other functions*/
 void make_word_lower(char *mot)
 {
-    char temp_mot[strlen(mot) + 1];
-    char *ptrchar = temp_mot;
-    strcpy(ptrchar, mot);
+    char *ptrchar = mot;
     while (*ptrchar != '\0')
     {
         if (*ptrchar < 91 && *ptrchar > 64)
@@ -220,26 +219,19 @@ void make_word_lower(char *mot)
         }
         ptrchar++;
     }
-
-    strcpy(mot, ptrchar);
 }
 
-t_Noeud *recherche_appronfondie(t_Noeud *ptrnoeud, char *word)
+t_Noeud *recherche_appronfondie(t_Noeud *ptrn, char *word)
 {
-    t_Noeud *ptrn;
-    char copyword[strlen(word) + 1];
-
-    strcpy(copyword, word);
-    make_word_lower(copyword);
-    if (strcmp(copyword, ptrn->mot) > 0)
+    if (strcmp(word, ptrn->mot) > 0)
     {
         return recherche_appronfondie(ptrn->filsDroit, word);
     }
-    else if (strcmp(copyword, ptrn->mot) < 0)
+    else if (strcmp(word, ptrn->mot) < 0)
     {
         return recherche_appronfondie(ptrn->filsGauche, word);
     }
-    if (strcmp(copyword, ptrn->mot) == 0)
+    if (strcmp(word, ptrn->mot) == 0)
     {
         return ptrn;
     }
@@ -248,7 +240,7 @@ t_Noeud *recherche_appronfondie(t_Noeud *ptrnoeud, char *word)
 //ajouter un noeud de maniere recurrence
 void ajouter_noeud_approfondie(t_Noeud *ptrnb, t_Noeud *nouveau, int *ajouteflag)
 {
-    if (ptrnb->mot < nouveau->mot)
+    if ( strcmp(ptrnb->mot, nouveau->mot) < 0)
     {
         if (ptrnb->filsDroit != NULL)
         {
@@ -260,7 +252,7 @@ void ajouter_noeud_approfondie(t_Noeud *ptrnb, t_Noeud *nouveau, int *ajouteflag
             *ajouteflag = 1;
         }
     }
-    if (ptrnb->mot > nouveau->mot)
+    if ( strcmp(ptrnb->mot, nouveau->mot) > 0)
     {
         if (ptrnb->filsGauche != NULL)
         {

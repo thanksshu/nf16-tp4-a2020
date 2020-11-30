@@ -63,7 +63,7 @@ void afficher_index(t_Index *index);
 /*other functions*/
 void make_word_lower(char *mot);
 
-t_Noeud *recherche_appronfondie(t_Noeud *ptrnoeud, char *word);
+t_Noeud *recherche_appronfondie(t_Noeud *ptrn, char *word);
 
 int IndexNotFound(t_Index *ptrindex);
 
