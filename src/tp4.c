@@ -88,13 +88,13 @@ t_Index *creer_index()
 t_Noeud *rechercher_mot(t_Index *index, char *mot)
 {
     t_Noeud *ptrnoeud;
+    make_word_lower(mot);
 
     if (index->racine == NULL)
     {
         return NULL;
     }
     ptrnoeud = index->racine;
-    make_word_lower(mot);
     return recherche_appronfondie(ptrnoeud, mot);
 }
 
@@ -116,7 +116,7 @@ int ajouter_noeud(t_Index *index, t_Noeud *noeud)
         index->racine = noeud;
         flag = 1;
     }
-    else 
+    else
     {
         ajouter_noeud_approfondie(index->racine, noeud, &flag);
     }
@@ -203,6 +203,7 @@ int indexer_fichier(t_Index *index, char *file_name)
         character = (char)fgetc(file);
     }
 
+    fclose(file);
     return word_count;
 }
 
@@ -211,35 +212,34 @@ void afficher_index(t_Index *index)
 {
 }
 
-
 void afficher_occurence_mot(t_Index *index, char *mot)
 {
-    t_Noeud *trouve, *ptrb;  /*pointer de boucle*/
+    t_Noeud *trouve, *ptrb; /*pointer de boucle*/
     t_Position *ptrpo;
-    int i,j;
+    int i, j;
     char *arrayofword[MAX_phrase];
     if (IndexNotFound(index))
     {
         return;
     }
 
-    trouve = rechercher_mot(mot);
+    trouve = rechercher_mot(index, mot);
     if (!trouve)
     {
         printf("Ce mot n'existe pas!");
         return;
     }
-    printf("Mot = '%s'\n",trouve->mot);
-    printf("Occurences = %d\n",trouve->nb_occurences);
+    printf("Mot = '%s'\n", trouve->mot);
+    printf("Occurences = %d\n", trouve->nb_occurences);
     ptrpo = trouve->positions->debut;
     for (i = 0; i < trouve->positions->nb_elements; i++)
     {
-        printf("| Ligne %d, mot %d :",ptrpo->numero_ligne, ptrpo->ordre_ligne);
+        printf("| Ligne %d, mot %d :", ptrpo->numero_ligne, ptrpo->ordre_ligne);
         traitementphrase(ptrpo, arrayofword, index->racine);
         j = 0;
         while (arrayofword[j] != NULL)
         {
-            printf(" %s",arrayofword[j]);
+            printf(" %s", arrayofword[j]);
             j++;
         }
         printf(".\n");
@@ -284,7 +284,7 @@ t_Noeud *recherche_appronfondie(t_Noeud *ptrn, char *word)
 //ajouter un noeud de maniere recurrence
 void ajouter_noeud_approfondie(t_Noeud *ptrnb, t_Noeud *nouveau, int *ajouteflag)
 {
-    if ( strcmp(ptrnb->mot, nouveau->mot) < 0)
+    if (strcmp(ptrnb->mot, nouveau->mot) < 0)
     {
         if (ptrnb->filsDroit != NULL)
         {
@@ -296,7 +296,7 @@ void ajouter_noeud_approfondie(t_Noeud *ptrnb, t_Noeud *nouveau, int *ajouteflag
             *ajouteflag = 1;
         }
     }
-    if ( strcmp(ptrnb->mot, nouveau->mot) > 0)
+    if (strcmp(ptrnb->mot, nouveau->mot) > 0)
     {
         if (ptrnb->filsGauche != NULL)
         {
@@ -346,7 +346,7 @@ void traitement_word(t_Index *index, char *word, int line_count, int line_word_o
         {
             printf("Echec de l'ajout de la position!");
         }
-        trouve->nb_occurences ++;
+        trouve->nb_occurences++;
     }
     else if (!trouve)
     {
@@ -392,7 +392,7 @@ void traitementnoeud(char **array, int n_phrase, t_Noeud *noeud_a_traiter)
         {
             array[ptrpo->ordre_phrase] = noeud_a_traiter->mot;
         }
-        ptrpo = ptrpo->suivant;/*最后是否为NULL？？*/
+        ptrpo = ptrpo->suivant; /*最后是否为NULL？？*/
     }
 }
 void parcours(char **array, int n_phrase, t_Noeud *noeud)
@@ -405,6 +405,20 @@ void parcours(char **array, int n_phrase, t_Noeud *noeud)
     parcours(array, n_phrase, noeud->filsGauche);
     parcours(array, n_phrase, noeud->filsDroit);
 }
+
+void parcours_index(t_Noeud *noeud, int height)
+{
+    if (noeud == NULL)
+    {
+        return;
+    }
+    printf("mot: %s, height: %d\n", noeud->mot, height);
+    printf("\t%d left:\n", height);
+    parcours_index(noeud->filsGauche, height + 1);
+    printf("\t%d right:\n", height);
+    parcours_index(noeud->filsDroit, height + 1);
+}
+
 void traitementphrase(t_Position *word_position, char **array, t_Noeud *racine)
 {
     int n_phrase;

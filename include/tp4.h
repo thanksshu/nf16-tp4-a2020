@@ -66,6 +66,8 @@ void afficher_occurence_mot(t_Index *index, char *mot);
 /*other functions*/
 void make_word_lower(char *mot);
 
+void parcours_index(t_Noeud *noeud, int height);
+
 t_Noeud *recherche_appronfondie(t_Noeud *ptrn, char *word);
 
 int IndexNotFound(t_Index *ptrindex);
