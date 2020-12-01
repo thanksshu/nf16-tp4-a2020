@@ -5,6 +5,7 @@
 #include <string.h>
 
 #define MAX_WORD_LENTH 65
+#define MAX_phrase 50
 
 typedef struct Position
 {
@@ -60,6 +61,8 @@ int indexer_fichier(t_Index *index, char *filename);
 //cette fonction affiche les mots classés par ordre alphabétique
 void afficher_index(t_Index *index);
 
+void afficher_occurence_mot(t_Index *index, char *mot);
+
 /*other functions*/
 void make_word_lower(char *mot);
 
@@ -75,6 +78,11 @@ void ajouter_noeud_approfondie(t_Noeud *racine, t_Noeud *nouveau, int *ajoutefla
 
 void traitement_word(t_Index *index, char *word, int line_count, int line_word_order, int phrase_count, int phrase_word_order);
 
+void traitementnoeud(char **array, int n_phrase, t_Noeud *noeud_a_traiter);
+
+void parcours(char **array, int n_phrase, t_Noeud *noeud);
+
+void traitementphrase(t_Position *word_position, char **array, t_Noeud *racine);
 //Cette fonction affiche le menu
 void affichageMenu();
 

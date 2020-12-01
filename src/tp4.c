@@ -211,6 +211,42 @@ void afficher_index(t_Index *index)
 {
 }
 
+
+void afficher_occurence_mot(t_Index *index, char *mot)
+{
+    t_Noeud *trouve, *ptrb;  /*pointer de boucle*/
+    t_Position *ptrpo;
+    int i,j;
+    char *arrayofword[MAX_phrase];
+    if (IndexNotFound(index))
+    {
+        return;
+    }
+
+    trouve = rechercher_mot(mot);
+    if (!trouve)
+    {
+        printf("Ce mot n'existe pas!");
+        return;
+    }
+    printf("Mot = '%s'\n",trouve->mot);
+    printf("Occurences = %d\n",trouve->nb_occurences);
+    ptrpo = trouve->positions->debut;
+    for (i = 0; i < trouve->positions->nb_elements; i++)
+    {
+        printf("| Ligne %d, mot %d :",ptrpo->numero_ligne, ptrpo->ordre_ligne);
+        traitementphrase(ptrpo, arrayofword, index->racine);
+        j = 0;
+        while (arrayofword[j] != NULL)
+        {
+            printf(" %s",arrayofword[j]);
+            j++;
+        }
+        printf(".\n");
+        ptrpo = ptrpo->suivant;
+    }
+}
+
 /*other functions*/
 void make_word_lower(char *mot)
 {
@@ -344,6 +380,36 @@ int NoeudNotFound(t_Noeud *ptrn)
         return 1;
     }
     return 0;
+}
+
+void traitementnoeud(char **array, int n_phrase, t_Noeud *noeud_a_traiter)
+{
+    t_Position *ptrpo;
+    ptrpo = noeud_a_traiter->positions->debut;
+    while (ptrpo)
+    {
+        if (ptrpo->numero_phrase == n_phrase)
+        {
+            array[ptrpo->ordre_phrase] = noeud_a_traiter->mot;
+        }
+        ptrpo = ptrpo->suivant;/*最后是否为NULL？？*/
+    }
+}
+void parcours(char **array, int n_phrase, t_Noeud *noeud)
+{
+    if (noeud == NULL)
+    {
+        return;
+    }
+    traitementnoeud(array, n_phrase, noeud);
+    parcours(array, n_phrase, noeud->filsGauche);
+    parcours(array, n_phrase, noeud->filsDroit);
+}
+void traitementphrase(t_Position *word_position, char **array, t_Noeud *racine)
+{
+    int n_phrase;
+    n_phrase = word_position->numero_phrase;
+    parcours(array, n_phrase, racine);
 }
 
 //Cette fonction affiche le menu
