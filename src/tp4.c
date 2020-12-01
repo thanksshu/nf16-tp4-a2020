@@ -352,6 +352,7 @@ void traitement_word(t_Index *index, char *word, int line_count, int line_word_o
     {
         nliste = (t_ListePosition *)malloc(sizeof(t_ListePosition));
         nliste->nb_elements = 1;
+        nliste->debut = NULL;
         ajouter_position(nliste, line_count, phrase_count, line_word_order, phrase_word_order);
         nouveau = create_noeud(word, nliste);
         ajoutflag = ajouter_noeud(index, nouveau);
