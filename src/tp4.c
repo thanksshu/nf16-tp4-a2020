@@ -191,22 +191,41 @@ int indexer_fichier(t_Index *index, char *file_name)
     return word_count;
 }
 
-void afficher_noeud(t_Noeud *noeud)
+void afficher_noeud(t_Noeud *noeud, char *first_char)
 {
     if (noeud == NULL)
     {
         return;
     }
 
-    afficher_noeud(noeud->filsGauche);
+    afficher_noeud(noeud->filsGauche, first_char);
 
-    printf("|-- %s\n", noeud->mot);
+    // detect changement of the first character
+    if (*first_char != *(noeud->mot) - 32)
+    {
+        memset(first_char, *(noeud->mot) - 32, 1);
+        printf("\n%c\n", *first_char);
+    }
+
+    // print the word
+    printf("├─ ");
+    // capital the first char
+    printf("%c", *(noeud->mot) - 32);
+    // rest of char
+    char *character = noeud->mot;
+    while (*character)
+    {
+        character++;
+        printf("%c", *character);
+    }
+    // end print
+    printf("\n");
 
     t_Position *position = noeud->positions->debut;
 
     while (position)
     {
-        printf("|---- l:%d p:%d ol:%d op:%d\n",
+        printf("├── (l:%d p:%d ol:%d op:%d)\n",
                position->numero_ligne,
                position->numero_phrase,
                position->ordre_ligne,
@@ -214,14 +233,14 @@ void afficher_noeud(t_Noeud *noeud)
         position = position->suivant;
     }
 
-    printf("|\n");
+    printf("│\n");
 
-    afficher_noeud(noeud->filsDroit);
+    afficher_noeud(noeud->filsDroit, first_char);
 }
 
 void afficher_index(t_Index *index)
 {
-    afficher_noeud(index->racine);
+    afficher_noeud(index->racine, malloc(sizeof(char)));
 }
 
 void afficher_occurence_mot(t_Index *index, char *mot)
