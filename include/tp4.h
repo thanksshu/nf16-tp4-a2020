@@ -1,5 +1,3 @@
-#ifndef TP3_TP3_H
-#define TP3_TP3_H
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -89,4 +87,3 @@ void traitementphrase(t_Position *word_position, char **array, t_Noeud *racine);
 void affichageMenu();
 
 void menuPrincipal(void);
-#endif //TP3_TP3_H
