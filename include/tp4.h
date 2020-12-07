@@ -29,6 +29,7 @@ typedef struct Noeud
     t_ListePosition *positions;
     struct Noeud *filsGauche;
     struct Noeud *filsDroit;
+    int bf;     // la difference de la hauteur entre le sous-arbre gauche et celle droit
 } t_Noeud;
 
 typedef struct Index
@@ -37,6 +38,17 @@ typedef struct Index
     int nb_mots_differents;
     int nb_mots_total;
 } t_Index;
+
+//STRUCTURE DES ELEMENTS DE LA PILE
+typedef struct elem {
+    t_Noeud* noeud;
+    struct elem* suivant;
+} Elem;
+
+//STRUCTURE DE LA PILE
+typedef struct pile {
+    Elem* firstElem;
+} Pile;
 
 //cette fonction créée une liste de position vide
 t_ListePosition *creer_liste_positions();
@@ -63,6 +75,8 @@ void afficher_index(t_Index *index);
 
 void afficher_occurence_mot(t_Index *index, char *mot);
 
+t_Index *equilibrer_index(t_Index *index);
+
 /*other functions*/
 void make_word_lower(char *mot);
 
@@ -85,6 +99,9 @@ void traitementnoeud(char **array, int n_phrase, t_Noeud *noeud_a_traiter);
 void parcours(char **array, int n_phrase, t_Noeud *noeud);
 
 void traitementphrase(t_Position *word_position, char **array, t_Noeud *racine);
+
+Pile* creer_pile();
+
 //Cette fonction affiche le menu
 void affichageMenu();
 

@@ -162,12 +162,12 @@ int indexer_fichier(t_Index *index, char *file_name)
         case '.':
             // is space
             printf("%s\n", word);
+            
+            traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order);
 
             // phrase ends
             phrase_count += 1;
             phrase_word_order = 0;
-
-            traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order);
 
             line_word_order += 1;
             phrase_word_order += 1;
@@ -208,8 +208,26 @@ int indexer_fichier(t_Index *index, char *file_name)
 }
 
 //cette fonction affiche les mots classés par ordre alphabétique
-void afficher_index(t_Index *index)
-{
+//L'objectif est de faire un affichage infixe
+void afficher_index(t_Index* index) {
+    t_Noeud* noeud = index->racine;
+    Pile* pile = creer_pile();
+    char currLettre = '0';
+
+    //Cette boucle va parcourir tous les noeuds de l'index jusqu'à la fin de l'arbre et tant que la pile n'est pas vide
+    while(noeud != NULL || pile->firstElem != NULL) {
+        //Cette boucle parcourt les noeuds de l'arbre
+        while(noeud != NULL) {
+            empiler(pile, noeud);
+            noeud = noeud->filsGauche;
+        }
+        noeud = depiler(pile);
+        //Cette fonction va permettre l'affichage des informations d'un mot et de changer si besoin l'alphabet dans lequel nous nous trouvons
+        currLettre = dataNoeud(currLettre, noeud);
+        noeud = noeud->filsDroit;
+    }
+    //On va libérer les ressources allouées pour la pile
+    libererPile(pile);
 }
 
 void afficher_occurence_mot(t_Index *index, char *mot)
@@ -246,6 +264,24 @@ void afficher_occurence_mot(t_Index *index, char *mot)
         ptrpo = ptrpo->suivant;
     }
 }
+
+//foncton pour equilibrer l'arbre d'un index
+t_Index *equilibrer_index(t_Index *index)
+{
+    t_Noeud *ptrb;   //pointer de boucle de noeuds dans l'arbre
+    t_Noeud *newracine = NULL;
+    ptrb = index->racine;
+
+    //parcours de l'arbre ancienne
+    equilibrer_parcours(ptrb, &newracine);
+
+    //modifier index
+    index->racine = newracine;
+
+    return index;
+}
+
+
 
 /*other functions*/
 void make_word_lower(char *mot)
@@ -427,6 +463,199 @@ void traitementphrase(t_Position *word_position, char **array, t_Noeud *racine)
     parcours(array, n_phrase, racine);
 }
 
+//rotation elementaire
+void R_Rotate(t_Noeud **p)
+{
+    t_Noeud *L;
+    L = (*p)->filsGauche;
+    (*p)->filsGauche = L->filsDroit;
+    L->filsDroit = (*p);
+    *p = L;
+}
+
+//rotation elementaire
+void L_Rotate(t_Noeud **p)
+{
+    t_Noeud *R;
+    R = (*p)->filsDroit;
+    (*p)->filsDroit = R->filsGauche;
+    R->filsGauche = (*p);
+    *p = R;
+}
+
+void LeftBalance(t_Noeud **ptrt)
+{
+    t_Noeud *L, *Lr;
+    L = (*ptrt)->filsGauche;
+
+    switch (L->bf)
+    {
+        case 1:
+            (*ptrt)->bf = L->bf = 0;
+            R_Rotate(ptrt);
+        case -1:
+            Lr = L->filsDroit;
+            switch(Lr->bf)
+            {
+                case 1:
+                    (*ptrt)->bf = -1;
+                    L->bf = 0;
+                    break;
+                case 0:
+                    (*ptrt)->bf = L->bf = 0;
+                    break;
+                case -1:
+                    (*ptrt)->bf = 0;
+                    L->bf = 1;
+                    break;
+            }
+            Lr->bf = 0;
+            L_Rotate(&(*ptrt)->filsGauche);
+            R_Rotate(ptrt);
+    }
+}
+
+void RightBalance(t_Noeud **ptrt)
+{
+    t_Noeud *R, *Rl;
+    R = (*ptrt)->filsDroit;
+
+    switch (R->bf)
+    {
+        case -1:
+            (*ptrt)->bf = R->bf = 0;
+            L_Rotate(ptrt);
+        case 1:
+            Rl = R->filsGauche;
+            switch(Rl->bf)
+            {
+                case 1:
+                    (*ptrt)->bf = 0;
+                    R->bf = -1;
+                    break;
+                case 0:
+                    (*ptrt)->bf = R->bf = 0;
+                    break;
+                case -1:
+                    (*ptrt)->bf = 1;
+                    R->bf = 0;
+                    break;
+            }
+            Rl->bf = 0;
+            R_Rotate(&(*ptrt)->filsDroit);
+            L_Rotate(ptrt);
+    }
+}
+
+//cette fonction permet de recreer l'arbre en respectant la propriete d'AVL
+int InsertAVL(t_Noeud **ptrt, char *word, int *taller)
+{
+    if (!*ptrt)
+    {
+        *ptrt = (t_Noeud *)malloc(sizeof(t_Noeud));
+        strcpy( (*ptrt)->mot, word);
+        (*ptrt)->filsGauche = (*ptrt)->filsDroit = NULL;
+        (*ptrt)->bf = 0;
+        *taller = 1;
+    }
+    else 
+    {
+        if ( strcmp(word, (*ptrt)->mot) == 0 )   /*noeud deja existe */
+        {
+            *taller = 0;
+            return 0;
+        }
+        if ( strcmp(word, (*ptrt)->mot) < 0)    /*parcourir a gauche*/
+        {
+            if ( !InsertAVL(&(*ptrt)->filsGauche, word, taller) )
+            {
+                return 0;
+            }
+            if (*taller)
+            {
+                switch( (*ptrt)->bf )
+                {
+                    case 1:
+                        LeftBalance(ptrt);
+                        *taller = 0;
+                        break;
+                    case 0:
+                        (*ptrt)->bf = 1;
+                        *taller = 1;
+                        break;
+                    case -1:
+                        (*ptrt)->bf = 0;
+                        *taller = 0;
+                        break;
+                }
+            }
+        }
+
+        else                      /*parcourir a droit*/
+        {
+            if ( !InsertAVL(&(*ptrt)->filsDroit, word, taller) )
+            {
+                return 0;
+            }
+            if (*taller)
+            {
+                switch( (*ptrt)->bf )
+                {
+                    case 1:
+                        (*ptrt)->bf = 0;
+                        *taller = 0;
+                        break;
+                    case 0:
+                        (*ptrt)->bf = -1;
+                        *taller = 1;
+                        break;
+                    case -1:
+                        RightBalance(ptrt);
+                        *taller = 0;
+                        break;
+                }
+            }
+        }
+    }
+}
+
+void equilibrer_parcours(t_Noeud *ptr_ancien, t_Noeud **new)
+{
+    int taller, insert;
+    taller = 0;
+    if (!ptr_ancien)
+    {
+        return;
+    }
+    insert = InsertAVL(new, ptr_ancien->mot, &taller);
+    equilibrer_parcours(ptr_ancien->filsGauche, new);
+    equilibrer_parcours(ptr_ancien->filsDroit, new);
+}
+
+//Cette fonction permet d'afficher toutes les informations sur un noeud et retourne le premier caractère du mot
+char* dataNoeud(char* currLettre, t_Noeud* noeud) {
+    //On stocke la première lettre du mot
+    char* c = noeud->mot[0];
+    t_ListePosition* listePos = noeud->positions;
+    t_Position* allPos = listePos->debut;
+
+    //on check si la première lettre du mot est différent de la lettre actuelle afin de changer l'affichage lors d'un changement de lettre dans l'alphabet
+    if(currLettre != c) {
+        currLettre = c;
+        printf("\n%c\n", currLettre);
+    }
+    printf("|-- %s\n", noeud->mot);
+
+    //Cette boucle parcourt la liste des positions du mot afin de les afficher
+    while(allPos != NULL) {
+        printf("|---- (l:%d, o:%d, p:%d)\n", allPos->numero_ligne, allPos->ordre_ligne, allPos->numero_phrase);
+        allPos = allPos->suivant;
+    }
+    printf("|\n");
+    return currLettre;
+}
+
+
 //Cette fonction affiche le menu
 void affichageMenu()
 {
@@ -444,7 +673,7 @@ void affichageMenu()
 void menuPrincipal(void)
 {
     int uinput, instanceImport = 0;
-
+    t_Index *index = (t_Index *)calloc(1, sizeof(t_Index));
     FILE *f;
 
     //Cette boucle va permettre d'affiche le menu tant que nous ne désirons pas de quitter le programme
@@ -460,11 +689,10 @@ void menuPrincipal(void)
         case 1:
         {
             /* Importation d'un fichier */
-
+            char char_input[125];
             //cette boucle est juste là pour permettre à l'utilisateur de rentrer un nom de fichier correct afin de pouvoir importer
             while (1)
             {
-                char char_input[64];
                 printf("Veuillez saisir le nom du fichier d'une instance:\n");
                 scanf("%s", char_input);
                 f = fopen(char_input, "r");
@@ -473,7 +701,8 @@ void menuPrincipal(void)
                 {
                     //création de l'instance
                     fclose(f);
-                    printf("Importation du fichier effectue\n");
+                    int nb_mots_lu = indexer_fichier(index, char_input);
+                    printf("Le fichier contient %d mots\n", nb_mots_lu);
                     instanceImport = 1;
                     break;
                 }
@@ -502,7 +731,7 @@ void menuPrincipal(void)
         }
         case 3:
         {
-            /* Afficher l'index */
+
 
             break;
         }
