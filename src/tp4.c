@@ -556,7 +556,7 @@ int InsertAVL(t_Noeud **ptrt, char *word, int *taller, t_Noeud *noeud_ancien)
         (*ptrt)->mot = (char *)malloc(sizeof(MAX_WORD_LENTH));
         strcpy((*ptrt)->mot, word);
         (*ptrt)->filsGauche = (*ptrt)->filsDroit = NULL;
-        (*ptrt)->nb_occurences = 0;
+        (*ptrt)->nb_occurences = noeud_ancien->nb_occurences;
         (*ptrt)->bf = 0;
         (*ptrt)->positions = noeud_ancien->positions;
         *taller = 1;
