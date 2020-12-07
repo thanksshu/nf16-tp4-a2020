@@ -43,20 +43,7 @@ int ajouter_position(t_ListePosition *liste_position,
             temp_pos = temp_pos->suivant;
         }
 
-        // check if orders are correct
-        if ((temp_pos->numero_ligne <= pos->numero_ligne) &&
-            (temp_pos->numero_phrase <= pos->numero_phrase) &&
-            (temp_pos->ordre_ligne <= pos->ordre_ligne) &&
-            (temp_pos->ordre_phrase <= pos->ordre_phrase))
-        {
-            // right
-            temp_pos->suivant = pos;
-        }
-        else
-        {
-            // not right
-            return 0;
-        }
+        temp_pos->suivant = pos;
     }
     else
     {
@@ -149,49 +136,46 @@ int indexer_fichier(t_Index *index, char *file_name)
         {
         case ' ':
             // is space
-            printf("%s\n", word);
+            if (word[0])
+            {
+                traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order);
 
-            traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order);
-
-            // word end
-            word_count += 1;
-            line_word_order += 1;
-            phrase_word_order += 1;
-            memset(word, '\0', sizeof(word)); // reset word
+                // word ends
+                word_count += 1;
+                line_word_order += 1;
+                phrase_word_order += 1;
+                memset(word, '\0', sizeof(word)); // reset word
+            }
             break;
         case '.':
-            // is space
-            printf("%s\n", word);
-
-            traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order);
-
-            // phrase ends
+            // is dot
+            if (word[0])
+            {
+                traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order);
+                // word ends
+                line_word_order += 1;
+                phrase_word_order += 1;
+                memset(word, '\0', sizeof(word)); // reset word
+            }
+            // must be a phrase end
             phrase_count += 1;
             phrase_word_order = 0;
-
-            line_word_order += 1;
-            phrase_word_order += 1;
-            memset(word, '\0', sizeof(word)); // reset word
-
-            // skip next space
-            character = (char)fgetc(file);
             break;
         case '\n':
             // is new line
-            printf("%s\n", word);
-
-            // line ends
+            // no word such as ".\n" ". \n"
+            if (word[0])
+            {
+                traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order);
+                // word ends
+                word_count += 1;
+                line_word_order += 1;
+                phrase_word_order += 1;
+                memset(word, '\0', sizeof(word)); // reset word
+            }
+            // must be a line end
             line_count += 1;
             line_word_order = 0;
-
-            traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order);
-
-            // word ends
-            word_count += 1;
-            line_word_order += 1;
-            phrase_word_order += 1;
-            memset(word, '\0', sizeof(word)); // reset word
-
             break;
         default:
             // a character in a word
@@ -207,36 +191,45 @@ int indexer_fichier(t_Index *index, char *file_name)
     return word_count;
 }
 
-//cette fonction affiche les mots classés par ordre alphabétique
-//L'objectif est de faire un affichage infixe
-
-/* void afficher_index(t_Index* index) {
-    t_Noeud* noeud = index->racine;
-    Pile* pile = creer_pile();
-    char currLettre = '0';
-
-    //Cette boucle va parcourir tous les noeuds de l'index jusqu'à la fin de l'arbre et tant que la pile n'est pas vide
-    while(noeud != NULL || pile->firstElem != NULL) {
-        //Cette boucle parcourt les noeuds de l'arbre
-        while(noeud != NULL) {
-            empiler(pile, noeud);
-            noeud = noeud->filsGauche;
-        }
-        noeud = depiler(pile);
-        //Cette fonction va permettre l'affichage des informations d'un mot et de changer si besoin l'alphabet dans lequel nous nous trouvons
-        currLettre = dataNoeud(currLettre, noeud);
-        noeud = noeud->filsDroit;
+void afficher_noeud(t_Noeud *noeud)
+{
+    if (noeud == NULL)
+    {
+        return;
     }
-    //On va libérer les ressources allouées pour la pile
-    libererPile(pile);
-} */
+
+    afficher_noeud(noeud->filsGauche);
+
+    printf("|-- %s\n", noeud->mot);
+
+    t_Position *position = noeud->positions->debut;
+
+    while (position)
+    {
+        printf("|---- l:%d p:%d ol:%d op:%d\n",
+               position->numero_ligne,
+               position->numero_phrase,
+               position->ordre_ligne,
+               position->ordre_phrase);
+        position = position->suivant;
+    }
+
+    printf("|\n");
+
+    afficher_noeud(noeud->filsDroit);
+}
+
+void afficher_index(t_Index *index)
+{
+    afficher_noeud(index->racine);
+}
 
 void afficher_occurence_mot(t_Index *index, char *mot)
 {
     t_Noeud *trouve, *ptrb; /*pointer de boucle*/
     t_Position *ptrpo;
     int i, j;
-    char *arrayofword[MAX_phrase];
+    char *arrayofword[MAX_phrase] = {};
     if (IndexNotFound(index))
     {
         return;
@@ -379,7 +372,7 @@ void traitement_word(t_Index *index, char *word, int line_count, int line_word_o
     {
         if (!(ajouter_position(trouve->positions, line_count, phrase_count, line_word_order, phrase_word_order)))
         {
-            printf("Echec de l'ajout de la position!");
+            printf("\nEchec de l'ajout de la position!\n");
         }
         trouve->nb_occurences++;
     }
@@ -431,6 +424,7 @@ void traitementnoeud(char **array, int n_phrase, t_Noeud *noeud_a_traiter)
         ptrpo = ptrpo->suivant; /*最后是否为NULL？？*/
     }
 }
+
 void parcours(char **array, int n_phrase, t_Noeud *noeud)
 {
     if (noeud == NULL)
