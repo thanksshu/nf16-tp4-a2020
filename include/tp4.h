@@ -100,8 +100,17 @@ void parcours(char **array, int n_phrase, t_Noeud *noeud);
 
 void traitementphrase(t_Position *word_position, char **array, t_Noeud *racine);
 
-Pile* creer_pile();
+void equilibrer_parcours(t_Noeud *ptr_ancien, t_Noeud **new);
 
+int InsertAVL(t_Noeud **ptrt, char *word, int *taller, t_Noeud *noeud_ancien);
+
+void RightBalance(t_Noeud **ptrt);
+
+void LeftBalance(t_Noeud **ptrt);
+
+void L_Rotate(t_Noeud **p);
+
+void R_Rotate(t_Noeud **p);
 //Cette fonction affiche le menu
 void affichageMenu();
 
