@@ -162,7 +162,7 @@ int indexer_fichier(t_Index *index, char *file_name)
         case '.':
             // is space
             printf("%s\n", word);
-            
+
             traitement_word(index, word, line_count, line_word_order, phrase_count, phrase_word_order);
 
             // phrase ends
@@ -209,7 +209,8 @@ int indexer_fichier(t_Index *index, char *file_name)
 
 //cette fonction affiche les mots classés par ordre alphabétique
 //L'objectif est de faire un affichage infixe
-void afficher_index(t_Index* index) {
+
+/* void afficher_index(t_Index* index) {
     t_Noeud* noeud = index->racine;
     Pile* pile = creer_pile();
     char currLettre = '0';
@@ -228,7 +229,7 @@ void afficher_index(t_Index* index) {
     }
     //On va libérer les ressources allouées pour la pile
     libererPile(pile);
-}
+} */
 
 void afficher_occurence_mot(t_Index *index, char *mot)
 {
@@ -268,7 +269,7 @@ void afficher_occurence_mot(t_Index *index, char *mot)
 //foncton pour equilibrer l'arbre d'un index
 t_Index *equilibrer_index(t_Index *index)
 {
-    t_Noeud *ptrb;   //pointer de boucle de noeuds dans l'arbre
+    t_Noeud *ptrb; //pointer de boucle de noeuds dans l'arbre
     t_Noeud *newracine = NULL;
     ptrb = index->racine;
 
@@ -280,8 +281,6 @@ t_Index *equilibrer_index(t_Index *index)
 
     return index;
 }
-
-
 
 /*other functions*/
 void make_word_lower(char *mot)
@@ -387,7 +386,7 @@ void traitement_word(t_Index *index, char *word, int line_count, int line_word_o
     else if (!trouve)
     {
         nliste = (t_ListePosition *)malloc(sizeof(t_ListePosition));
-        nliste->nb_elements = 1;
+        nliste->nb_elements = 0;
         nliste->debut = NULL;
         ajouter_position(nliste, line_count, phrase_count, line_word_order, phrase_word_order);
         nouveau = create_noeud(word, nliste);
@@ -490,28 +489,28 @@ void LeftBalance(t_Noeud **ptrt)
 
     switch (L->bf)
     {
+    case 1:
+        (*ptrt)->bf = L->bf = 0;
+        R_Rotate(ptrt);
+    case -1:
+        Lr = L->filsDroit;
+        switch (Lr->bf)
+        {
         case 1:
+            (*ptrt)->bf = -1;
+            L->bf = 0;
+            break;
+        case 0:
             (*ptrt)->bf = L->bf = 0;
-            R_Rotate(ptrt);
+            break;
         case -1:
-            Lr = L->filsDroit;
-            switch(Lr->bf)
-            {
-                case 1:
-                    (*ptrt)->bf = -1;
-                    L->bf = 0;
-                    break;
-                case 0:
-                    (*ptrt)->bf = L->bf = 0;
-                    break;
-                case -1:
-                    (*ptrt)->bf = 0;
-                    L->bf = 1;
-                    break;
-            }
-            Lr->bf = 0;
-            L_Rotate(&(*ptrt)->filsGauche);
-            R_Rotate(ptrt);
+            (*ptrt)->bf = 0;
+            L->bf = 1;
+            break;
+        }
+        Lr->bf = 0;
+        L_Rotate(&(*ptrt)->filsGauche);
+        R_Rotate(ptrt);
     }
 }
 
@@ -522,97 +521,101 @@ void RightBalance(t_Noeud **ptrt)
 
     switch (R->bf)
     {
-        case -1:
-            (*ptrt)->bf = R->bf = 0;
-            L_Rotate(ptrt);
+    case -1:
+        (*ptrt)->bf = R->bf = 0;
+        L_Rotate(ptrt);
+        break;
+    case 1:
+        Rl = R->filsGauche;
+        switch (Rl->bf)
+        {
         case 1:
-            Rl = R->filsGauche;
-            switch(Rl->bf)
-            {
-                case 1:
-                    (*ptrt)->bf = 0;
-                    R->bf = -1;
-                    break;
-                case 0:
-                    (*ptrt)->bf = R->bf = 0;
-                    break;
-                case -1:
-                    (*ptrt)->bf = 1;
-                    R->bf = 0;
-                    break;
-            }
-            Rl->bf = 0;
-            R_Rotate(&(*ptrt)->filsDroit);
-            L_Rotate(ptrt);
+            (*ptrt)->bf = 0;
+            R->bf = -1;
+            break;
+        case 0:
+            (*ptrt)->bf = R->bf = 0;
+            break;
+        case -1:
+            (*ptrt)->bf = 1;
+            R->bf = 0;
+            break;
+        }
+        Rl->bf = 0;
+        R_Rotate(&(*ptrt)->filsDroit);
+        L_Rotate(ptrt);
     }
 }
 
 //cette fonction permet de recreer l'arbre en respectant la propriete d'AVL
-int InsertAVL(t_Noeud **ptrt, char *word, int *taller)
+int InsertAVL(t_Noeud **ptrt, char *word, int *taller, t_Noeud *noeud_ancien)
 {
     if (!*ptrt)
     {
         *ptrt = (t_Noeud *)malloc(sizeof(t_Noeud));
-        strcpy( (*ptrt)->mot, word);
+        (*ptrt)->mot = (char *)malloc(sizeof(MAX_WORD_LENTH));
+        strcpy((*ptrt)->mot, word);
         (*ptrt)->filsGauche = (*ptrt)->filsDroit = NULL;
+        (*ptrt)->nb_occurences = noeud_ancien->nb_occurences;
         (*ptrt)->bf = 0;
+        (*ptrt)->positions = noeud_ancien->positions;
         *taller = 1;
     }
-    else 
+    else
     {
-        if ( strcmp(word, (*ptrt)->mot) == 0 )   /*noeud deja existe */
+        if (strcmp(word, (*ptrt)->mot) == 0) /*noeud deja existe */
         {
             *taller = 0;
             return 0;
         }
-        if ( strcmp(word, (*ptrt)->mot) < 0)    /*parcourir a gauche*/
+        if (strcmp(word, (*ptrt)->mot) < 0) /*parcourir a gauche*/
         {
-            if ( !InsertAVL(&(*ptrt)->filsGauche, word, taller) )
+            if (!InsertAVL(&(*ptrt)->filsGauche, word, taller, noeud_ancien))
             {
                 return 0;
             }
             if (*taller)
             {
-                switch( (*ptrt)->bf )
+                switch ((*ptrt)->bf)
                 {
-                    case 1:
-                        LeftBalance(ptrt);
-                        *taller = 0;
-                        break;
-                    case 0:
-                        (*ptrt)->bf = 1;
-                        *taller = 1;
-                        break;
-                    case -1:
-                        (*ptrt)->bf = 0;
-                        *taller = 0;
-                        break;
+                case 1:
+                    LeftBalance(ptrt);
+                    *taller = 0;
+                    break;
+                case 0:
+                    (*ptrt)->bf = 1;
+                    *taller = 1;
+                    break;
+                case -1:
+                    (*ptrt)->bf = 0;
+                    *taller = 0;
+                    break;
                 }
             }
         }
 
-        else                      /*parcourir a droit*/
+        else /*parcourir a droit*/
         {
-            if ( !InsertAVL(&(*ptrt)->filsDroit, word, taller) )
+            if (!InsertAVL(&(*ptrt)->filsDroit, word, taller, noeud_ancien))
             {
                 return 0;
             }
             if (*taller)
             {
-                switch( (*ptrt)->bf )
+                switch ((*ptrt)->bf)
                 {
-                    case 1:
-                        (*ptrt)->bf = 0;
-                        *taller = 0;
-                        break;
-                    case 0:
-                        (*ptrt)->bf = -1;
-                        *taller = 1;
-                        break;
-                    case -1:
-                        RightBalance(ptrt);
-                        *taller = 0;
-                        break;
+                case 1:
+                    (*ptrt)->bf = 0;
+                    *taller = 0;
+                    break;
+                case 0:
+                    (*ptrt)->bf = -1;
+                    *taller = 1;
+                    break;
+                case -1:
+                    RightBalance(ptrt);
+                    *taller = 0;
+                    break;
                 }
             }
         }
@@ -627,34 +630,10 @@ void equilibrer_parcours(t_Noeud *ptr_ancien, t_Noeud **new)
     {
         return;
     }
-    insert = InsertAVL(new, ptr_ancien->mot, &taller);
+    insert = InsertAVL(new, ptr_ancien->mot, &taller, ptr_ancien);
     equilibrer_parcours(ptr_ancien->filsGauche, new);
     equilibrer_parcours(ptr_ancien->filsDroit, new);
 }
-
-//Cette fonction permet d'afficher toutes les informations sur un noeud et retourne le premier caractère du mot
-char* dataNoeud(char* currLettre, t_Noeud* noeud) {
-    //On stocke la première lettre du mot
-    char* c = noeud->mot[0];
-    t_ListePosition* listePos = noeud->positions;
-    t_Position* allPos = listePos->debut;
-
-    //on check si la première lettre du mot est différent de la lettre actuelle afin de changer l'affichage lors d'un changement de lettre dans l'alphabet
-    if(currLettre != c) {
-        currLettre = c;
-        printf("\n%c\n", currLettre);
-    }
-    printf("|-- %s\n", noeud->mot);
-
-    //Cette boucle parcourt la liste des positions du mot afin de les afficher
-    while(allPos != NULL) {
-        printf("|---- (l:%d, o:%d, p:%d)\n", allPos->numero_ligne, allPos->ordre_ligne, allPos->numero_phrase);
-        allPos = allPos->suivant;
-    }
-    printf("|\n");
-    return currLettre;
-}
-
 
 //Cette fonction affiche le menu
 void affichageMenu()
@@ -731,7 +710,6 @@ void menuPrincipal(void)
         }
         case 3:
         {
-
 
             break;
         }
