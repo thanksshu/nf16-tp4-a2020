@@ -2,114 +2,73 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_WORD_LENTH 65
-#define MAX_phrase 50
+#define MAX_WORD_LENTH 64
+#define MAX_PHRASE_LENTH 128
 
 typedef struct Position
 {
-    int numero_ligne;         // in which line
-    int numero_phrase;        // in which phrase
-    int ordre_ligne;          // order in line ! mod !
-    int ordre_phrase;         // order in phrase ! mod !
-    struct Position *suivant; // next appearance
+    int numero_ligne;         // in which line, start with 0
+    int numero_phrase;        // in which phrase, start with 0
+    int ordre_ligne;          // order in line, start with 0
+    int ordre_phrase;         // order in phrase, start with 0
+    struct Position *suivant; // next position
 } t_Position;
 
 typedef struct ListesPosition
 {
-    t_Position *debut;
-    int nb_elements;
+    t_Position *debut; // first position
+    int nb_elements;   // number of positions in list
 } t_ListePosition;
 
 typedef struct Noeud
 {
-    char *mot;
-    int nb_occurences;
-    t_ListePosition *positions;
-    struct Noeud *filsGauche;
-    struct Noeud *filsDroit;
-    int bf;     // la difference de la hauteur entre le sous-arbre gauche et celle droit
+    char *mot;                  // word of this node
+    int nb_occurences;          // number of duplicated words
+    t_ListePosition *positions; // list of positions
+    struct Noeud *filsGauche;   // left child
+    struct Noeud *filsDroit;    // right child
+    int balance;                // left tree height - right tree height
 } t_Noeud;
 
 typedef struct Index
 {
-    t_Noeud *racine;
-    int nb_mots_differents;
-    int nb_mots_total;
+    t_Noeud *racine;        // root
+    int nb_mots_differents; // number of words in tree
+    int nb_mots_total;      // number of words in file
 } t_Index;
 
-//STRUCTURE DES ELEMENTS DE LA PILE
-typedef struct elem {
-    t_Noeud* noeud;
-    struct elem* suivant;
-} Elem;
-
-//STRUCTURE DE LA PILE
-typedef struct pile {
-    Elem* firstElem;
-} Pile;
-
-//cette fonction créée une liste de position vide
 t_ListePosition *creer_liste_positions();
 
-//cette fonction ajoute un nouvel element dans une liste de position triée, ! mod !
-int ajouter_position(t_ListePosition *liste_position,
+int ajouter_position(t_ListePosition *listeP,
                      int numero_ligne, int numero_phrase,
                      int ordre_ligne, int ordre_phrase);
 
-//cette fonction créée un index vide
-t_Index *creer_index();
-
-//cette fonction recherche un mot dans un index
 t_Noeud *rechercher_mot(t_Index *index, char *mot);
 
-//cette fonction permet d'ajouter un noeud dans l'index
 int ajouter_noeud(t_Index *index, t_Noeud *noeud);
 
-//cette fonction permet d'indexer un fichier lu
 int indexer_fichier(t_Index *index, char *filename);
 
-//cette fonction affiche les mots classés par ordre alphabétique
 void afficher_index(t_Index *index);
 
 void afficher_occurence_mot(t_Index *index, char *mot);
 
+// TODO:
 t_Index *equilibrer_index(t_Index *index);
 
-/*other functions*/
-void make_word_lower(char *mot);
+/* other functions */
+// free a tree with node as its root
+void _free_btree(t_Noeud *node);
 
-void parcours_index(t_Noeud *noeud, int height);
+// add a node in a tree
+int _add_node(t_Noeud *node_root, t_Noeud *node_new);
 
-t_Noeud *recherche_appronfondie(t_Noeud *ptrn, char *word);
+// search a node using a word
+t_Noeud *_search_word(t_Noeud *node, char *word);
 
-int IndexNotFound(t_Index *ptrindex);
+// print out (almost) all infomation of a node
+void _print_node(t_Noeud *noeud, char *first_char);
 
-int NoeudNotFound(t_Noeud *ptrn);
-
-t_Noeud *create_noeud(char *mot, t_ListePosition *position);
-
-void ajouter_noeud_approfondie(t_Noeud *racine, t_Noeud *nouveau, int *ajouteflag);
-
-void traitement_word(t_Index *index, char *word, int line_count, int line_word_order, int phrase_count, int phrase_word_order);
-
-void traitementnoeud(char **array, int n_phrase, t_Noeud *noeud_a_traiter);
-
-void parcours(char **array, int n_phrase, t_Noeud *noeud);
-
-void traitementphrase(t_Position *word_position, char **array, t_Noeud *racine);
-
-void equilibrer_parcours(t_Noeud *ptr_ancien, t_Noeud **new);
-
-int InsertAVL(t_Noeud **ptrt, char *word, int *taller, t_Noeud *noeud_ancien);
-
-void RightBalance(t_Noeud **ptrt);
-
-void LeftBalance(t_Noeud **ptrt);
-
-void L_Rotate(t_Noeud **p);
-
-void R_Rotate(t_Noeud **p);
-//Cette fonction affiche le menu
-void affichageMenu();
-
-void menuPrincipal(void);
+// use inside of afficher_occurence_mot, to form a phrase
+void _make_phrase(t_Noeud *node, int num_phrase,
+                  char *array_phrase[MAX_PHRASE_LENTH]);
