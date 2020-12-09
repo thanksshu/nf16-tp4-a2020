@@ -27,7 +27,7 @@ typedef struct Noeud
     t_ListePosition *positions; // list of positions
     struct Noeud *filsGauche;   // left child
     struct Noeud *filsDroit;    // right child
-    int balance;                // left tree height - right tree height
+    int balance_factor;         // left tree height - right tree height
 } t_Noeud;
 
 typedef struct Index
@@ -57,18 +57,35 @@ void afficher_occurence_mot(t_Index *index, char *mot);
 t_Index *equilibrer_index(t_Index *index);
 
 /* other functions */
-// free a tree with node as its root
-void _free_btree(t_Noeud *node);
+/** free a tree with node as its root
+ * @param node root node to start cleaning
+ */
+void _free_tree(t_Noeud *node);
 
-// add a node in a tree
-int _add_node(t_Noeud *node_root, t_Noeud *node_new);
+/** add a node in a tree
+ * @param node_self root node to start being added
+ * @param result final add result, -1 add duplicated, 1 success, 0 failed
+ * @param self_grow if node_self grows higher, 0 no, 1 grow
+ */
+void _add_node(t_Noeud *node_self, t_Noeud *node_new,
+               int *result, int *self_grow);
 
-// search a node using a word
+/** 
+ * search a node using a word
+ * @param node root node to start searching
+ */
 t_Noeud *_search_word(t_Noeud *node, char *word);
 
-// print out (almost) all infomation of a node
-void _print_node(t_Noeud *noeud, char *first_char);
+/**
+ *  print out (almost) all infomation of a node recusively
+ * @param node root node to start printing
+ * @param first_char previous word's first character
+ */
+void _print_tree(t_Noeud *node, char *pre_first_char);
 
-// use inside of afficher_occurence_mot, to form a phrase
+/** 
+ * use inside of afficher_occurence_mot, to form a phrase recusively
+ * @param node root node to start forming
+ */
 void _make_phrase(t_Noeud *node, int num_phrase,
                   char *array_phrase[MAX_PHRASE_LENTH]);

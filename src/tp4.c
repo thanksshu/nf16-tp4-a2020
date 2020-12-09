@@ -120,7 +120,9 @@ int ajouter_noeud(t_Index *index, t_Noeud *noeud)
     }
 
     // add node recusively
-    int result = _add_node(index->racine, noeud);
+    int result, grow = 0;
+    _add_node(index->racine, noeud, &result, &grow);
+
     // add failed
     if (result == 0)
     {
@@ -138,58 +140,86 @@ int ajouter_noeud(t_Index *index, t_Noeud *noeud)
     }
 }
 
-int _add_node(t_Noeud *node_root, t_Noeud *node_new)
+void _add_node(t_Noeud *node_self, t_Noeud *node_new, int *result, int *self_grow)
 {
-    // word duplicated
-    if (strcmp(node_root->mot, node_new->mot) == 0)
+    // which child grows: 1 for left, -1 for right, 0 neither grows
+    int child_grow = 0;
+
+    /* add the new node, set final result, update balance */
+    if (strcmp(node_self->mot, node_new->mot) == 0)
+    // word duplicated with self
     {
         // add new position
-        ajouter_position(node_root->positions,
+        ajouter_position(node_self->positions,
                          node_new->positions->debut->numero_ligne,
                          node_new->positions->debut->numero_phrase,
                          node_new->positions->debut->ordre_ligne,
                          node_new->positions->debut->ordre_phrase);
         // free new node
-        _free_btree(node_new);
+        _free_tree(node_new);
 
-        node_root->nb_occurences += 1;
-        return -1;
+        node_self->nb_occurences += 1;
+        // child tree didn't grow
+        child_grow = 0;
+        *result = -1;
     }
-
-    // word's node to add is bigger, try add to right
-    if (strcmp(node_root->mot, node_new->mot) < 0)
+    else if (strcmp(node_self->mot, node_new->mot) < 0)
+    // word's node to add is bigger than self, try add to right
     {
+        if (node_self->filsDroit)
         // already have a node at right, try add node to next level
-        if (node_root->filsDroit)
         {
-            return _add_node(node_root->filsDroit, node_new);
+            int right_grow = 0;
+            _add_node(node_self->filsDroit, node_new, result, &right_grow);
+            child_grow = right_grow ? -1 : 0;
         }
         else
         // add succeed
         {
-            node_root->filsDroit = node_new;
-            return 1;
+            node_self->filsDroit = node_new;
+            // right tree grows higher
+            child_grow = -1;
+            // a different word added
+            *result = 1;
         }
     }
-
-    // word's node to add is smaller, try add to left
-    if (strcmp(node_root->mot, node_new->mot) > 0)
+    else if (strcmp(node_self->mot, node_new->mot) > 0)
+    // word's node to add is smaller than self, try add to left
     {
-        // already have a node at right, try add node to next level
-        if (node_root->filsGauche)
+        // try add to left
+        if (node_self->filsGauche)
+        // already have a node at left, try add node to next level
         {
-            return _add_node(node_root->filsGauche, node_new);
+            int left_grow = 0;
+            _add_node(node_self->filsGauche, node_new, result, &left_grow);
+            child_grow = left_grow ? 1 : 0;
         }
         else
-        // add succeed
+        // can add to left
         {
-            node_root->filsGauche = node_new;
-            return 1;
+            node_self->filsGauche = node_new;
+            // left tree grows higher
+            child_grow = 1;
+            // a different word added
+            *result = 1;
         }
     }
 
-    // something goes wrong
-    return 0;
+    /* recalculate self balance */
+    int pre_balance_factor = node_self->balance_factor;
+    node_self->balance_factor += child_grow;
+    // child tree grows and self grows
+    if (child_grow && abs(node_self->balance_factor) > abs(pre_balance_factor))
+    {
+        // TODO: make it avl
+        // self tree grows higher
+        *self_grow = 1;
+        return;
+    }
+
+    // child tree didn't grow or self won't grow
+    *self_grow = 0;
+    return;
 }
 
 int indexer_fichier(t_Index *index, char *file_name)
@@ -205,7 +235,7 @@ int indexer_fichier(t_Index *index, char *file_name)
     // index already have a tree
     {
         // clean up old tree
-        _free_btree(index->racine);
+        _free_tree(index->racine);
         index->nb_mots_differents = 0;
         index->nb_mots_total = 0;
     }
@@ -272,8 +302,8 @@ int indexer_fichier(t_Index *index, char *file_name)
                 if (!ajouter_noeud(index, node))
                 // fail to add
                 {
-                    _free_btree(node);
-                    _free_btree(index->racine);
+                    _free_tree(node);
+                    _free_tree(index->racine);
                     index->nb_mots_differents = 0;
                     index->nb_mots_total = 0;
                     return 0;
@@ -315,7 +345,7 @@ int indexer_fichier(t_Index *index, char *file_name)
     return word_count;
 }
 
-void _free_btree(t_Noeud *node)
+void _free_tree(t_Noeud *node)
 {
     if (!node)
     // empty node, nothing to free
@@ -325,9 +355,9 @@ void _free_btree(t_Noeud *node)
 
     // postfix traversal
     // free left
-    _free_btree(node->filsGauche);
+    _free_tree(node->filsGauche);
     // free right
-    _free_btree(node->filsDroit);
+    _free_tree(node->filsDroit);
     // free self
     // free mot
     free(node->mot);
@@ -345,34 +375,38 @@ void _free_btree(t_Noeud *node)
 
 void afficher_index(t_Index *index)
 {
-    _print_node(index->racine, (char *)calloc(1, sizeof(char)));
+    char *first_char = (char *)calloc(1, sizeof(char));
+    // print recusively
+    _print_tree(index->racine, first_char);
+    free(first_char);
 }
 
-void _print_node(t_Noeud *noeud, char *first_char)
+void _print_tree(t_Noeud *node, char *pre_first_char)
 {
     // nothing to print
-    if (noeud == NULL)
+    if (node == NULL)
     {
         return;
     }
 
-    // prefix traversal
+    // infix traversal
     // print left node
-    _print_node(noeud->filsGauche, first_char);
+    _print_tree(node->filsGauche, pre_first_char);
 
     // detect changement of the first character
-    if (*first_char != *(noeud->mot) - 32)
+    if (*pre_first_char != *node->mot)
     {
-        memset(first_char, *(noeud->mot) - 32, 1);
-        printf("\n%c\n", *first_char);
+        // print with capital case
+        printf("\n%c\n", *node->mot - 32);
+        *pre_first_char = *node->mot;
     }
 
     // print the word
     printf("├─ ");
     // capital the first char
-    printf("%c", *(noeud->mot) - 32);
+    printf("%c", *(node->mot) - 32);
     // rest of char
-    char *character = noeud->mot;
+    char *character = node->mot;
     while (*character)
     {
         character++;
@@ -381,7 +415,7 @@ void _print_node(t_Noeud *noeud, char *first_char)
     // end print
     printf("\n");
 
-    t_Position *position = noeud->positions->debut;
+    t_Position *position = node->positions->debut;
 
     while (position)
     {
@@ -396,7 +430,7 @@ void _print_node(t_Noeud *noeud, char *first_char)
     printf("│\n");
 
     // print right node
-    _print_node(noeud->filsDroit, first_char);
+    _print_tree(node->filsDroit, pre_first_char);
 }
 
 void afficher_occurence_mot(t_Index *index, char *mot)
