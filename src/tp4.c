@@ -101,7 +101,7 @@ t_Noeud *_search_word(t_Noeud *node, char *word)
     }
 }
 
-int ajouter_noeud(t_Index *index, t_Noeud *noeud)
+int ajouter_noeud(t_Index *index, t_Noeud *noeud, int balance)
 {
     // check if index and node don't exist
     if (!index || !noeud)
@@ -121,7 +121,7 @@ int ajouter_noeud(t_Index *index, t_Noeud *noeud)
 
     // add node recusively
     int result, grow = 0;
-    _add_node(index->racine, noeud, &result, &grow);
+    _add_node(&(index->racine), noeud, &result, &grow, balance);
 
     // add failed
     if (result == 0)
@@ -140,64 +140,66 @@ int ajouter_noeud(t_Index *index, t_Noeud *noeud)
     }
 }
 
-void _add_node(t_Noeud *node_self, t_Noeud *node_new, int *result, int *self_grow)
+void _add_node(t_Noeud **ptr_node_self, t_Noeud *node_new, int *result, int *self_grow, int balance)
 {
     // which child grows: 1 for left, -1 for right, 0 neither grows
     int child_grow = 0;
 
     /* add the new node, set final result, update balance */
-    if (strcmp(node_self->mot, node_new->mot) == 0)
+    if (strcmp((*ptr_node_self)->mot, node_new->mot) == 0)
     // word duplicated with self
     {
         // add new position
-        ajouter_position(node_self->positions,
+        ajouter_position((*ptr_node_self)->positions,
                          node_new->positions->debut->numero_ligne,
                          node_new->positions->debut->numero_phrase,
                          node_new->positions->debut->ordre_ligne,
                          node_new->positions->debut->ordre_phrase);
-        // free new node
+        // no longer need the new node, free it
         _free_tree(node_new);
 
-        node_self->nb_occurences += 1;
+        (*ptr_node_self)->nb_occurences += 1;
         // child tree didn't grow
         child_grow = 0;
         *result = -1;
     }
-    else if (strcmp(node_self->mot, node_new->mot) < 0)
+    else if (strcmp((*ptr_node_self)->mot, node_new->mot) < 0)
     // word's node to add is bigger than self, try add to right
     {
-        if (node_self->filsDroit)
+        if ((*ptr_node_self)->filsDroit)
         // already have a node at right, try add node to next level
         {
             int right_grow = 0;
-            _add_node(node_self->filsDroit, node_new, result, &right_grow);
+            _add_node(&((*ptr_node_self)->filsDroit), node_new, result, &right_grow,
+                      balance);
             child_grow = right_grow ? -1 : 0;
         }
         else
         // add succeed
         {
-            node_self->filsDroit = node_new;
+            (*ptr_node_self)->filsDroit = node_new;
             // right tree grows higher
             child_grow = -1;
             // a different word added
             *result = 1;
         }
     }
-    else if (strcmp(node_self->mot, node_new->mot) > 0)
+    else if (strcmp((*ptr_node_self)->mot, node_new->mot) > 0)
     // word's node to add is smaller than self, try add to left
     {
         // try add to left
-        if (node_self->filsGauche)
+        if ((*ptr_node_self)->filsGauche)
         // already have a node at left, try add node to next level
         {
             int left_grow = 0;
-            _add_node(node_self->filsGauche, node_new, result, &left_grow);
+            _add_node(&((*ptr_node_self)->filsGauche), node_new, result, &left_grow,
+                      balance);
             child_grow = left_grow ? 1 : 0;
         }
         else
         // can add to left
         {
-            node_self->filsGauche = node_new;
+            (*ptr_node_self)->filsGauche = node_new;
             // left tree grows higher
             child_grow = 1;
             // a different word added
@@ -205,24 +207,138 @@ void _add_node(t_Noeud *node_self, t_Noeud *node_new, int *result, int *self_gro
         }
     }
 
-    /* recalculate self balance */
-    int pre_balance_factor = node_self->balance_factor;
-    node_self->balance_factor += child_grow;
-    // child tree grows and self grows
-    if (child_grow && abs(node_self->balance_factor) > abs(pre_balance_factor))
+    /* recalculate self balance factor */
+    int pre_balance_factor = (*ptr_node_self)->balance_factor;
+    (*ptr_node_self)->balance_factor += child_grow;
+    if (abs((*ptr_node_self)->balance_factor) > abs(pre_balance_factor))
+    // self tree grows
     {
-        // TODO: make it avl
+        // check if balance required
+        if (balance)
+        {
+            // balanced then won't grow, grow if no balance
+            int result = 0;
+            _balance_tree(&(*ptr_node_self), &result);
+            *self_grow = result ? 0 : 1;
+            return;
+        }
+
+        // no balance needed
         // self tree grows higher
         *self_grow = 1;
         return;
     }
-
-    // child tree didn't grow or self won't grow
+    // self won't grow
     *self_grow = 0;
     return;
 }
 
-int indexer_fichier(t_Index *index, char *file_name)
+void _balance_tree(t_Noeud **ptr_root, int *result)
+{
+    // check if need balance
+    if ((*ptr_root)->balance_factor == -2 && (*ptr_root)->filsDroit->balance_factor == 1)
+    {
+        // right left rotation
+        _rotate_right(&((*ptr_root)->filsDroit));
+        _rotate_left(ptr_root);
+
+        // update balance factor
+        (*ptr_root)->filsGauche->balance_factor = 0;
+        (*ptr_root)->filsDroit->balance_factor = 0;
+        switch ((*ptr_root)->balance_factor)
+        {
+        case 1:
+            (*ptr_root)->filsDroit->balance_factor = -1;
+            break;
+        case -1:
+            (*ptr_root)->filsGauche->balance_factor = 1;
+            break;
+        default:
+            break;
+        }
+        (*ptr_root)->balance_factor = 0;
+
+        *result = 1;
+        return;
+    }
+
+    if ((*ptr_root)->balance_factor == -2 && (*ptr_root)->filsDroit->balance_factor == -1)
+    {
+        // left rotation
+        _rotate_left(ptr_root);
+
+        // update balance factor
+        (*ptr_root)->filsGauche->balance_factor = 0;
+        (*ptr_root)->balance_factor = 0;
+
+        *result = 1;
+        return;
+    }
+    else if ((*ptr_root)->balance_factor == 2 && (*ptr_root)->filsDroit->balance_factor == -1)
+    {
+
+        // left right rotation
+        _rotate_left(&((*ptr_root)->filsGauche));
+        _rotate_right(ptr_root);
+
+        // update balance factor
+        (*ptr_root)->filsGauche->balance_factor = 0;
+        (*ptr_root)->filsDroit->balance_factor = 0;
+        switch ((*ptr_root)->balance_factor)
+        {
+        case 1:
+            (*ptr_root)->filsDroit->balance_factor = -1;
+            break;
+        case -1:
+            (*ptr_root)->filsGauche->balance_factor = 1;
+            break;
+        default:
+            break;
+        }
+        (*ptr_root)->balance_factor = 0;
+        // end balance
+        *result = 1;
+        return;
+    }
+
+    if ((*ptr_root)->balance_factor == 2 && (*ptr_root)->filsDroit->balance_factor == 1)
+    {
+        // right rotation
+        _rotate_right(ptr_root);
+
+        // update balance factor
+        (*ptr_root)->filsDroit->balance_factor = 0;
+        (*ptr_root)->balance_factor = 0;
+        // end balance
+        *result = 1;
+        return;
+    }
+
+    // no balance needed
+    *result = 0;
+    return;
+}
+
+void _rotate_right(t_Noeud **ptr_root)
+{
+    t_Noeud *pivot = (*ptr_root)->filsGauche;
+    // root's left child change
+    (*ptr_root)->filsGauche = pivot->filsDroit;
+    // left_child's right child change
+    pivot->filsDroit = *ptr_root;
+    // change the root
+    *ptr_root = pivot;
+}
+
+void _rotate_left(t_Noeud **ptr_root)
+{
+    t_Noeud *pivot = (*ptr_root)->filsDroit;
+    (*ptr_root)->filsDroit = pivot->filsGauche;
+    pivot->filsGauche = *ptr_root;
+    *ptr_root = pivot;
+}
+
+int indexer_fichier(t_Index *index, char *file_name, int balance)
 {
     // check index
     if (!index)
@@ -299,7 +415,7 @@ int indexer_fichier(t_Index *index, char *file_name)
                 node->nb_occurences = 1;
 
                 // add new node to tree
-                if (!ajouter_noeud(index, node))
+                if (!ajouter_noeud(index, node, balance))
                 // fail to add
                 {
                     _free_tree(node);
@@ -560,26 +676,6 @@ void _make_phrase(t_Noeud *node, int num_phrase,
 //     parcours_index(noeud->filsGauche, height + 1);
 //     printf("\t%d right:\n", height);
 //     parcours_index(noeud->filsDroit, height + 1);
-// }
-
-// //rotation elementaire
-// void R_Rotate(t_Noeud **p)
-// {
-//     t_Noeud *L;
-//     L = (*p)->filsGauche;
-//     (*p)->filsGauche = L->filsDroit;
-//     L->filsDroit = (*p);
-//     *p = L;
-// }
-
-// //rotation elementaire
-// void L_Rotate(t_Noeud **p)
-// {
-//     t_Noeud *R;
-//     R = (*p)->filsDroit;
-//     (*p)->filsDroit = R->filsGauche;
-//     R->filsGauche = (*p);
-//     *p = R;
 // }
 
 // void LeftBalance(t_Noeud **ptrt)

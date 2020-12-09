@@ -4,9 +4,9 @@
 int main()
 {
     // menuPrincipal();
-    // t_Index *index = (t_Index *)calloc(1, sizeof(t_Index));
 
-    // indexer_fichier(index, "/home/thanksshu/Documents/Onedrive/Etudes/NF16/tp/tp4/test.txt");
+    // t_Index *index = (t_Index *)calloc(1, sizeof(t_Index));
+    // indexer_fichier(index, "/home/thanksshu/Documents/Onedrive/Etudes/NF16/tp/tp4/test.txt", 0);
 
     // afficher_index(index);
 

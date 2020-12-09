@@ -45,9 +45,15 @@ int ajouter_position(t_ListePosition *listeP,
 
 t_Noeud *rechercher_mot(t_Index *index, char *mot);
 
-int ajouter_noeud(t_Index *index, t_Noeud *noeud);
+/**
+ * @param balance create a AVL or not
+ */
+int ajouter_noeud(t_Index *index, t_Noeud *noeud, int balance);
 
-int indexer_fichier(t_Index *index, char *filename);
+/**
+ * @param balance create a AVL or not
+ */
+int indexer_fichier(t_Index *index, char *filename, int balance);
 
 void afficher_index(t_Index *index);
 
@@ -58,34 +64,50 @@ t_Index *equilibrer_index(t_Index *index);
 
 /* other functions */
 /** free a tree with node as its root
- * @param node root node to start cleaning
+ * @param node pointer of root node to start cleaning
  */
 void _free_tree(t_Noeud *node);
 
 /** add a node in a tree
- * @param node_self root node to start being added
+ * @param ptr_node_self pointer of root node address to start being added
+ * , using double pointer to make root node can be replaced, used for rotation
  * @param result final add result, -1 add duplicated, 1 success, 0 failed
  * @param self_grow if node_self grows higher, 0 no, 1 grow
+ * @param balance 1 to balance, 0 no balance
  */
-void _add_node(t_Noeud *node_self, t_Noeud *node_new,
-               int *result, int *self_grow);
+void _add_node(t_Noeud **ptr_node_self, t_Noeud *node_new,
+               int *result, int *self_grow, int balance);
+
+/** 
+ * balance a minimal imbalanced BST
+ * @param node the pointer of root node
+ * , using double pointer to make root node can be replaced, used for rotation
+ * @param result as return value: balanced(1) or not(0)
+ */
+void _balance_tree(t_Noeud **ptr_root, int *result);
+
+void _rotate_right(t_Noeud **ptr_root);
+
+void _rotate_left(t_Noeud **ptr_root);
 
 /** 
  * search a node using a word
- * @param node root node to start searching
+ * @param node pointer of root node to start searching
+ * @return returns the found node, NULL for not found
  */
 t_Noeud *_search_word(t_Noeud *node, char *word);
 
 /**
  *  print out (almost) all infomation of a node recusively
- * @param node root node to start printing
+ * @param node pointer of root node to start printing
  * @param first_char previous word's first character
  */
 void _print_tree(t_Noeud *node, char *pre_first_char);
 
 /** 
  * use inside of afficher_occurence_mot, to form a phrase recusively
- * @param node root node to start forming
+ * @param node pointer of root node to start forming
  */
 void _make_phrase(t_Noeud *node, int num_phrase,
                   char *array_phrase[MAX_PHRASE_LENTH]);
+
