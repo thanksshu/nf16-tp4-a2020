@@ -6,12 +6,12 @@ t_ListePosition *creer_liste_positions()
     return list_position ? list_position : NULL;
 }
 
-int ajouter_position(t_ListePosition *liste_position,
+int ajouter_position(t_ListePosition *listeP,
                      int numero_ligne, int numero_phrase,
                      int ordre_ligne, int ordre_phrase)
 {
-    // check if liste_position is NULL
-    if (!liste_position)
+    // check if listeP is NULL
+    if (!listeP)
     {
         return -1;
     }
@@ -28,10 +28,10 @@ int ajouter_position(t_ListePosition *liste_position,
     position->ordre_phrase = ordre_phrase;
 
     // check if list_position have a t_Position
-    if (liste_position->debut)
+    if (listeP->debut)
     {
         // already have one postion
-        t_Position *temp_pos = liste_position->debut;
+        t_Position *temp_pos = listeP->debut;
         // to the end of list
         while (temp_pos->suivant)
         {
@@ -43,11 +43,11 @@ int ajouter_position(t_ListePosition *liste_position,
     else
     {
         // empty list
-        liste_position->debut = position;
+        listeP->debut = position;
     }
 
     // element number plus one
-    liste_position->nb_elements += 1;
+    listeP->nb_elements += 1;
     return 1;
 }
 
@@ -123,12 +123,8 @@ int ajouter_noeud(t_Index *index, t_Noeud *noeud, int balance)
     int result, grow = 0;
     _add_node(&(index->racine), noeud, &result, &grow, balance);
 
-    // add failed
-    if (result == 0)
-    {
-        return 0;
-    }
-    else
+    if (result)
+    // add success
     {
         index->nb_mots_total += 1;
         // return 1 means no duplication
@@ -137,6 +133,11 @@ int ajouter_noeud(t_Index *index, t_Noeud *noeud, int balance)
             index->nb_mots_differents += 1;
         }
         return 1;
+    }
+    else
+    // add failed
+    {
+        return 0;
     }
 }
 
@@ -216,9 +217,10 @@ void _add_node(t_Noeud **ptr_root, t_Noeud *new, int *result, int *self_grow, in
         // check if balance required
         if (balance)
         {
-            // balanced then won't grow, grow if no balance
             int result = 0;
             _balance_tree(&(*ptr_root), &result);
+            // if balance performed then self won't grow
+            // if not self still grow
             *self_grow = result ? 0 : 1;
             return;
         }
@@ -235,16 +237,35 @@ void _add_node(t_Noeud **ptr_root, t_Noeud *new, int *result, int *self_grow, in
 
 void _balance_tree(t_Noeud **ptr_root, int *result)
 {
+    // reset result
+    *result = 0;
+
     // check if need balance
-    if ((*ptr_root)->balance_factor == -2 && (*ptr_root)->filsDroit->balance_factor == 1)
+    if ((*ptr_root)->balance_factor == -2 &&
+        (*ptr_root)->filsDroit->balance_factor == 1)
     {
         // right left rotation
         _rotate_right(&((*ptr_root)->filsDroit));
         _rotate_left(ptr_root);
 
-        // update balance factor
-        (*ptr_root)->filsGauche->balance_factor = 0;
+        *result = 1;
+    }
+    else if ((*ptr_root)->balance_factor == 2 &&
+             (*ptr_root)->filsGauche->balance_factor == -1)
+    {
+
+        // left right rotation
+        _rotate_left(&((*ptr_root)->filsGauche));
+        _rotate_right(ptr_root);
+
+        *result = 1;
+    }
+
+    if (*result)
+    {
+        // update balance factor after double rotation
         (*ptr_root)->filsDroit->balance_factor = 0;
+        (*ptr_root)->filsGauche->balance_factor = 0;
         switch ((*ptr_root)->balance_factor)
         {
         case 1:
@@ -254,15 +275,17 @@ void _balance_tree(t_Noeud **ptr_root, int *result)
             (*ptr_root)->filsGauche->balance_factor = 1;
             break;
         default:
+            // two child's balance factor already set to 0
             break;
         }
         (*ptr_root)->balance_factor = 0;
 
-        *result = 1;
+        // end balance
         return;
     }
 
-    if ((*ptr_root)->balance_factor == -2 && (*ptr_root)->filsDroit->balance_factor == -1)
+    if ((*ptr_root)->balance_factor == -2 &&
+        (*ptr_root)->filsDroit->balance_factor == -1)
     {
         // left rotation
         _rotate_left(ptr_root);
@@ -271,38 +294,13 @@ void _balance_tree(t_Noeud **ptr_root, int *result)
         (*ptr_root)->filsGauche->balance_factor = 0;
         (*ptr_root)->balance_factor = 0;
 
-        *result = 1;
-        return;
-    }
-    
-    if ((*ptr_root)->balance_factor == 2 && (*ptr_root)->filsGauche->balance_factor == -1)
-    {
-
-        // left right rotation
-        _rotate_left(&((*ptr_root)->filsGauche));
-        _rotate_right(ptr_root);
-
-        // update balance factor
-        (*ptr_root)->filsGauche->balance_factor = 0;
-        (*ptr_root)->filsDroit->balance_factor = 0;
-        switch ((*ptr_root)->balance_factor)
-        {
-        case 1:
-            (*ptr_root)->filsDroit->balance_factor = -1;
-            break;
-        case -1:
-            (*ptr_root)->filsGauche->balance_factor = 1;
-            break;
-        default:
-            break;
-        }
-        (*ptr_root)->balance_factor = 0;
         // end balance
         *result = 1;
         return;
     }
 
-    if ((*ptr_root)->balance_factor == 2 && (*ptr_root)->filsGauche->balance_factor == 1)
+    if ((*ptr_root)->balance_factor == 2 &&
+        (*ptr_root)->filsGauche->balance_factor == 1)
     {
         // right rotation
         _rotate_right(ptr_root);
@@ -310,6 +308,7 @@ void _balance_tree(t_Noeud **ptr_root, int *result)
         // update balance factor
         (*ptr_root)->filsDroit->balance_factor = 0;
         (*ptr_root)->balance_factor = 0;
+
         // end balance
         *result = 1;
         return;
@@ -409,8 +408,8 @@ int indexer_fichier(t_Index *index, char *file_name)
                 ajouter_position(list_position, line_count, phrase_count,
                                  line_word_order, phrase_word_order);
                 node->positions = list_position;
-                // init mot
-                node->mot = (char *)calloc(1, sizeof(MAX_WORD_LENTH));
+                // init mot, alloc with one more char to content \0
+                node->mot = (char *)calloc(1, (MAX_WORD_LENTH + 1) * sizeof(char));
                 strcpy(node->mot, word);
                 // init occurence
                 node->nb_occurences = 1;
@@ -700,7 +699,8 @@ int _build_avl(t_Noeud **ptr_root, t_Index *index)
     {
         // build with postfix traversal
         // build left then build right
-        if (_build_avl(&((*ptr_root)->filsGauche), index) && _build_avl(&((*ptr_root)->filsDroit), index))
+        if (_build_avl(&((*ptr_root)->filsGauche), index) &&
+            _build_avl(&((*ptr_root)->filsDroit), index))
         // build success
         {
             // build self

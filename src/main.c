@@ -1,28 +1,44 @@
-#include <stdio.h>
 #include "../include/tp4.h"
+
+#include <signal.h>
 
 int main()
 {
     // menuPrincipal();
+    // return 0;
 
-    // t_Index *index = (t_Index *)calloc(1, sizeof(t_Index));
-    // indexer_fichier(index, "/home/thanksshu/Documents/Onedrive/Etudes/NF16/tp/tp4/test.txt", 0);
+    // test code
+    t_Index *index = (t_Index *)calloc(1, sizeof(t_Index));
+    printf("nombre mot lu: %d\n",
+          indexer_fichier(index, "/home/thanksshu/Documents/Onedrive/Etudes/NF16/tp/tp4/test.txt"));
 
-    // afficher_index(index);
+    printf("%d %d\n", index->nb_mots_total, index->nb_mots_differents);
 
-    // char mot[MAX_WORD_LENTH] = "keeps";
-    // afficher_occurence_mot(index, mot);
+    printf("balance: %d\n", _check_balance(index->racine));
 
-    // strcpy(mot, "day");
-    // afficher_occurence_mot(index, mot);
+    afficher_index(index);
 
-    // strcpy(mot, "da");
-    // afficher_occurence_mot(index, mot);
+    t_Noeud *node_found = rechercher_mot(index, "day");
+    node_found ? printf("%s", node_found->mot) : printf("NULL");
 
-    // strcpy(mot, "doctor");
-    // afficher_occurence_mot(index, mot);
+    afficher_occurence_mot(index, "day");
 
-    // index = equilibrer_index(index);
-    // afficher_occurence_mot(index, mot);
+    // balance
+    index = equilibrer_index(index);
+
+    printf("%d %d\n", index->nb_mots_total, index->nb_mots_differents);
+
+    printf("balance: %d\n", _check_balance(index->racine));
+
+    afficher_index(index);
+
+    node_found = rechercher_mot(index, "day");
+    node_found ? printf("%s", node_found->mot) : printf("NULL");
+
+    afficher_occurence_mot(index, "day");
+
+    _free_tree(index->racine);
+    free(index);
+
     return 0;
 }
