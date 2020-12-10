@@ -373,12 +373,12 @@ int indexer_fichier(t_Index *index, char *file_name)
     char character = (char)fgetc(file);
     while (character != EOF)
     {
-        if (character != ' ' && character != '.' && character != '\n')
-        // not word, line, phrase end, append the character to the word
+        if (character > 64 && character < 91 || character > 96 && character < 123)
+        // capital or lower case character
         {
             word[strlen(word)] = character;
         }
-        else
+        else if (!(character != ' ' && character != '.' && character != '\n'))
         // may be a word, line, phrase end
         // a ' ' may be a word end, excep "  "
         // a '.' end may be a word end, except ".." ". .", it must be a phrase end
@@ -451,6 +451,14 @@ int indexer_fichier(t_Index *index, char *file_name)
                 line_count += 1;
                 line_word_order = 0;
             }
+        }
+        else
+        {
+            // invalid word
+            _free_tree(index->racine);
+            index->nb_mots_differents = 0;
+            index->nb_mots_total = 0;
+            return 0;
         }
 
         // read a new character
