@@ -140,66 +140,66 @@ int ajouter_noeud(t_Index *index, t_Noeud *noeud, int balance)
     }
 }
 
-void _add_node(t_Noeud **ptr_node_self, t_Noeud *node_new, int *result, int *self_grow, int balance)
+void _add_node(t_Noeud **ptr_root, t_Noeud *new, int *result, int *self_grow, int balance)
 {
     // which child grows: 1 for left, -1 for right, 0 neither grows
     int child_grow = 0;
 
     /* add the new node, set final result, update balance */
-    if (strcmp((*ptr_node_self)->mot, node_new->mot) == 0)
+    if (strcmp((*ptr_root)->mot, new->mot) == 0)
     // word duplicated with self
     {
         // add new position
-        ajouter_position((*ptr_node_self)->positions,
-                         node_new->positions->debut->numero_ligne,
-                         node_new->positions->debut->numero_phrase,
-                         node_new->positions->debut->ordre_ligne,
-                         node_new->positions->debut->ordre_phrase);
+        ajouter_position((*ptr_root)->positions,
+                         new->positions->debut->numero_ligne,
+                         new->positions->debut->numero_phrase,
+                         new->positions->debut->ordre_ligne,
+                         new->positions->debut->ordre_phrase);
         // no longer need the new node, free it
-        _free_tree(node_new);
+        _free_tree(new);
 
-        (*ptr_node_self)->nb_occurences += 1;
+        (*ptr_root)->nb_occurences += 1;
         // child tree didn't grow
         child_grow = 0;
         *result = -1;
     }
-    else if (strcmp((*ptr_node_self)->mot, node_new->mot) < 0)
+    else if (strcmp((*ptr_root)->mot, new->mot) < 0)
     // word's node to add is bigger than self, try add to right
     {
-        if ((*ptr_node_self)->filsDroit)
+        if ((*ptr_root)->filsDroit)
         // already have a node at right, try add node to next level
         {
             int right_grow = 0;
-            _add_node(&((*ptr_node_self)->filsDroit), node_new, result, &right_grow,
+            _add_node(&((*ptr_root)->filsDroit), new, result, &right_grow,
                       balance);
             child_grow = right_grow ? -1 : 0;
         }
         else
         // add succeed
         {
-            (*ptr_node_self)->filsDroit = node_new;
+            (*ptr_root)->filsDroit = new;
             // right tree grows higher
             child_grow = -1;
             // a different word added
             *result = 1;
         }
     }
-    else if (strcmp((*ptr_node_self)->mot, node_new->mot) > 0)
+    else if (strcmp((*ptr_root)->mot, new->mot) > 0)
     // word's node to add is smaller than self, try add to left
     {
         // try add to left
-        if ((*ptr_node_self)->filsGauche)
+        if ((*ptr_root)->filsGauche)
         // already have a node at left, try add node to next level
         {
             int left_grow = 0;
-            _add_node(&((*ptr_node_self)->filsGauche), node_new, result, &left_grow,
+            _add_node(&((*ptr_root)->filsGauche), new, result, &left_grow,
                       balance);
             child_grow = left_grow ? 1 : 0;
         }
         else
         // can add to left
         {
-            (*ptr_node_self)->filsGauche = node_new;
+            (*ptr_root)->filsGauche = new;
             // left tree grows higher
             child_grow = 1;
             // a different word added
@@ -208,9 +208,9 @@ void _add_node(t_Noeud **ptr_node_self, t_Noeud *node_new, int *result, int *sel
     }
 
     /* recalculate self balance factor */
-    int pre_balance_factor = (*ptr_node_self)->balance_factor;
-    (*ptr_node_self)->balance_factor += child_grow;
-    if (abs((*ptr_node_self)->balance_factor) > abs(pre_balance_factor))
+    int pre_balance_factor = (*ptr_root)->balance_factor;
+    (*ptr_root)->balance_factor += child_grow;
+    if (abs((*ptr_root)->balance_factor) > abs(pre_balance_factor))
     // self tree grows
     {
         // check if balance required
@@ -218,7 +218,7 @@ void _add_node(t_Noeud **ptr_node_self, t_Noeud *node_new, int *result, int *sel
         {
             // balanced then won't grow, grow if no balance
             int result = 0;
-            _balance_tree(&(*ptr_node_self), &result);
+            _balance_tree(&(*ptr_root), &result);
             *self_grow = result ? 0 : 1;
             return;
         }
@@ -274,7 +274,8 @@ void _balance_tree(t_Noeud **ptr_root, int *result)
         *result = 1;
         return;
     }
-    else if ((*ptr_root)->balance_factor == 2 && (*ptr_root)->filsDroit->balance_factor == -1)
+    
+    if ((*ptr_root)->balance_factor == 2 && (*ptr_root)->filsGauche->balance_factor == -1)
     {
 
         // left right rotation
@@ -301,7 +302,7 @@ void _balance_tree(t_Noeud **ptr_root, int *result)
         return;
     }
 
-    if ((*ptr_root)->balance_factor == 2 && (*ptr_root)->filsDroit->balance_factor == 1)
+    if ((*ptr_root)->balance_factor == 2 && (*ptr_root)->filsGauche->balance_factor == 1)
     {
         // right rotation
         _rotate_right(ptr_root);
@@ -338,7 +339,7 @@ void _rotate_left(t_Noeud **ptr_root)
     *ptr_root = pivot;
 }
 
-int indexer_fichier(t_Index *index, char *file_name, int balance)
+int indexer_fichier(t_Index *index, char *file_name)
 {
     // check index
     if (!index)
@@ -415,7 +416,7 @@ int indexer_fichier(t_Index *index, char *file_name, int balance)
                 node->nb_occurences = 1;
 
                 // add new node to tree
-                if (!ajouter_noeud(index, node, balance))
+                if (!ajouter_noeud(index, node, 0))
                 // fail to add
                 {
                     _free_tree(node);
@@ -649,189 +650,77 @@ void _make_phrase(t_Noeud *node, int num_phrase,
     _make_phrase(node->filsDroit, num_phrase, array_phrase);
 }
 
-// //foncton pour equilibrer l'arbre d'un index
-// t_Index *equilibrer_index(t_Index *index)
-// {
-//     t_Noeud *ptrb; //pointer de boucle de noeuds dans l'arbre
-//     t_Noeud *newracine = NULL;
-//     ptrb = index->racine;
+t_Index *equilibrer_index(t_Index *index)
+{
+    // check if balance
+    if (_check_balance(index->racine))
+    // no need
+    {
+        return index;
+    }
 
-//     //parcours de l'arbre ancienne
-//     equilibrer_parcours(ptrb, &newracine);
+    // prepare new index
+    t_Index *index_avl = (t_Index *)calloc(1, sizeof(t_Index));
+    if (_build_avl(&(index->racine), index_avl))
+    // build success
+    {
+        // fix the total word count
+        index_avl->nb_mots_total = index->nb_mots_total;
+        // clean old index
+        free(index);
+        return index_avl;
+    }
+    // build failed
+    _free_tree(index_avl->racine);
+    free(index_avl);
+    return NULL;
+}
 
-//     //modifier index
-//     index->racine = newracine;
+int _check_balance(t_Noeud *root)
+{
+    if (root)
+    {
+        // prefix check
+        if (!(abs(root->balance_factor) < 2 &&
+              _check_balance(root->filsGauche) &&
+              _check_balance(root->filsDroit)))
+        // not balanced
+        {
+            return 0;
+        }
+    }
 
-//     return index;
-// }
+    // balance
+    return 1;
+}
 
-// void parcours_index(t_Noeud *noeud, int height)
-// {
-//     if (noeud == NULL)
-//     {
-//         return;
-//     }
-//     printf("mot: %s, height: %d\n", noeud->mot, height);
-//     printf("\t%d left:\n", height);
-//     parcours_index(noeud->filsGauche, height + 1);
-//     printf("\t%d right:\n", height);
-//     parcours_index(noeud->filsDroit, height + 1);
-// }
+int _build_avl(t_Noeud **ptr_root, t_Index *index)
+{
+    if (*ptr_root)
+    {
+        // build with postfix traversal
+        // build left then build right
+        if (_build_avl(&((*ptr_root)->filsGauche), index) && _build_avl(&((*ptr_root)->filsDroit), index))
+        // build success
+        {
+            // build self
+            // add the node to new index
+            (*ptr_root)->balance_factor = 0;
+            int result = ajouter_noeud(index, *ptr_root, 1);
+            // remove the node from origin
+            *ptr_root = NULL;
+            return result;
+        }
+        // build fail
+        else
+        {
+            return 0;
+        }
+    }
+    // nothing to build
+    return 1;
+}
 
-// void LeftBalance(t_Noeud **ptrt)
-// {
-//     t_Noeud *L, *Lr;
-//     L = (*ptrt)->filsGauche;
-
-//     switch (L->balance)
-//     {
-//     case 1:
-//         (*ptrt)->balance = L->balance = 0;
-//         R_Rotate(ptrt);
-//     case -1:
-//         Lr = L->filsDroit;
-//         switch (Lr->balance)
-//         {
-//         case 1:
-//             (*ptrt)->balance = -1;
-//             L->balance = 0;
-//             break;
-//         case 0:
-//             (*ptrt)->balance = L->balance = 0;
-//             break;
-//         case -1:
-//             (*ptrt)->balance = 0;
-//             L->balance = 1;
-//             break;
-//         }
-//         Lr->balance = 0;
-//         L_Rotate(&(*ptrt)->filsGauche);
-//         R_Rotate(ptrt);
-//     }
-// }
-
-// void RightBalance(t_Noeud **ptrt)
-// {
-//     t_Noeud *R, *Rl;
-//     R = (*ptrt)->filsDroit;
-
-//     switch (R->balance)
-//     {
-//     case -1:
-//         (*ptrt)->balance = R->balance = 0;
-//         L_Rotate(ptrt);
-//         break;
-//     case 1:
-//         Rl = R->filsGauche;
-//         switch (Rl->balance)
-//         {
-//         case 1:
-//             (*ptrt)->balance = 0;
-//             R->balance = -1;
-//             break;
-//         case 0:
-//             (*ptrt)->balance = R->balance = 0;
-//             break;
-//         case -1:
-//             (*ptrt)->balance = 1;
-//             R->balance = 0;
-//             break;
-//         }
-//         Rl->balance = 0;
-//         R_Rotate(&(*ptrt)->filsDroit);
-//         L_Rotate(ptrt);
-//     }
-// }
-
-// //cette fonction permet de recreer l'arbre en respectant la propriete d'AVL
-// int InsertAVL(t_Noeud **ptrt, char *word, int *taller, t_Noeud *noeud_ancien)
-// {
-//     if (!*ptrt)
-//     {
-//         *ptrt = (t_Noeud *)malloc(sizeof(t_Noeud));
-//         (*ptrt)->mot = (char *)malloc(sizeof(MAX_WORD_LENTH));
-//         strcpy((*ptrt)->mot, word);
-//         (*ptrt)->filsGauche = (*ptrt)->filsDroit = NULL;
-//         (*ptrt)->nb_occurences = noeud_ancien->nb_occurences;
-//         (*ptrt)->balance = 0;
-//         (*ptrt)->positions = noeud_ancien->positions;
-//         *taller = 1;
-//     }
-//     else
-//     {
-//         if (strcmp(word, (*ptrt)->mot) == 0) /*noeud deja existe */
-//         {
-//             *taller = 0;
-//             return 0;
-//         }
-//         if (strcmp(word, (*ptrt)->mot) < 0) /*parcourir a gauche*/
-//         {
-//             if (!InsertAVL(&(*ptrt)->filsGauche, word, taller, noeud_ancien))
-//             {
-//                 return 0;
-//             }
-//             if (*taller)
-//             {
-//                 switch ((*ptrt)->balance)
-//                 {
-//                 case 1:
-//                     LeftBalance(ptrt);
-//                     *taller = 0;
-//                     break;
-//                 case 0:
-//                     (*ptrt)->balance = 1;
-//                     *taller = 1;
-//                     break;
-//                 case -1:
-//                     (*ptrt)->balance = 0;
-//                     *taller = 0;
-//                     break;
-//                 }
-//             }
-//         }
-
-//         else /*parcourir a droit*/
-//         {
-//             if (!InsertAVL(&(*ptrt)->filsDroit, word, taller, noeud_ancien))
-//             {
-//                 return 0;
-//             }
-//             if (*taller)
-//             {
-//                 switch ((*ptrt)->balance)
-//                 {
-//                 case 1:
-//                     (*ptrt)->balance = 0;
-//                     *taller = 0;
-//                     break;
-//                 case 0:
-//                     (*ptrt)->balance = -1;
-//                     *taller = 1;
-//                     break;
-//                 case -1:
-//                     RightBalance(ptrt);
-//                     *taller = 0;
-//                     break;
-//                 }
-//             }
-//         }
-//     }
-// }
-
-// void equilibrer_parcours(t_Noeud *ptr_ancien, t_Noeud **new)
-// {
-//     int taller, insert;
-//     taller = 0;
-//     if (!ptr_ancien)
-//     {
-//         return;
-//     }
-//     insert = InsertAVL(new, ptr_ancien->mot, &taller, ptr_ancien);
-//     equilibrer_parcours(ptr_ancien->filsGauche, new);
-//     equilibrer_parcours(ptr_ancien->filsDroit, new);
-// }
-
-//Cette fonction est le menu dans lequel nous allons intéragir afin d'effectuer des actions
 // void menuPrincipal(void)
 // {
 //     int uinput, instanceImport = 0;
