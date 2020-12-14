@@ -729,99 +729,135 @@ int _build_avl(t_Noeud **ptr_root, t_Index *index)
     return 1;
 }
 
-// void menuPrincipal(void)
-// {
-//     int uinput, instanceImport = 0;
-//     t_Index *index = (t_Index *)calloc(1, sizeof(t_Index));
-//     FILE *f;
+void menuPrincipal(void)
+{
+    int choix, import= 0;
+	t_Index *index = (t_Index *)malloc(sizeof(t_Index));
+	
 
-//     //Cette boucle va permettre d'affiche le menu tant que nous ne désirons pas de quitter le programme
-//     do
-//     {
-//         //on va afficher le menu
-//         affichageMenu();
-//         //l'utilisateur va entrer un nombre (entre 1 et 7) afin d'effectuer l'action qu'il désire
-//         scanf("%d", &uinput);
-//         printf("\n");
-//         switch (uinput)
-//         {
-//         case 1:
-//         {
-//             /* Importation d'un fichier */
-//             char char_input[125];
-//             //cette boucle est juste là pour permettre à l'utilisateur de rentrer un nom de fichier correct afin de pouvoir importer
-//             while (1)
-//             {
-//                 printf("Veuillez saisir le nom du fichier d'une instance:\n");
-//                 scanf("%s", char_input);
-//                 f = fopen(char_input, "r");
-//                 //on check si le fichier existe
-//                 if (f)
-//                 {
-//                     //création de l'instance
-//                     fclose(f);
-//                     int nb_mots_lu = indexer_fichier(index, char_input);
-//                     printf("Le fichier contient %d mots\n", nb_mots_lu);
-//                     instanceImport = 1;
-//                     break;
-//                 }
-//                 else
-//                 {
-//                     //le fichier n'existe pas, on demande à l'utilisateur s'il veut continuer à chercher ou non
-//                     printf("Le fichier \"%s\" n'existe pas! Continuer? y/n:", char_input);
-//                     scanf("%s", char_input);
-//                     if (!strcmp("y", char_input))
-//                     {
-//                         continue;
-//                     }
-//                     else
-//                     {
-//                         break;
-//                     }
-//                 }
-//             }
-//             break;
-//         }
-//         case 2:
-//         {
-//             /* Caracteristiques de l'index */
+	do{
+		printf("______________Bienvenue______________\n");
+   		printf("1 - Charger un fichier\n");
+    		printf("2 - Caractéristiques de l'index\n");
+    		printf("3 - Afficher l'index\n");
+    		printf("4 - Rechercher un mot\n");
+    		printf("5 - Afficher les occurences d'un mot\n");
+    		printf("6 - Equilibrer l'index\n");
+    		printf("7 - Quitter\n");
+		
+		//We ask for the user to choose an option
+		scanf("%d", &choix);
+        	printf("\n\n");
+	
+		//We use a switch() to take care of the user's choice
+		switch(choix){
+			case 1 : //Charger un fichier
+				printf("Entrez le nom du fichier à indexer :\n");
+				char nomfichier[150];
+				scanf("%s", nomfichier);
+		
+				int nbmots = indexer_fichier(index, nomfichier);
 
-//             break;
-//         }
-//         case 3:
-//         {
+				if(nbmots!=0){
+					printf("Le fichier %s a été indéxé avec succès.\n", nomfichier);
+					printf("Il contient %d mots.\n\n", nbmots);
+					import=1;
+				}
+				else{
+					printf("Une erreur est survenue lors du chargement du fichier.\n\n");
+				}
+				
+				break;
 
-//             break;
-//         }
-//         case 4:
-//         {
-//             /* Rechercher un mot */
+			case 2 : //Caractéristiques de l'index
+				if(import!=0){
+					printf("L'index contient %d mots différents.\n", index->nb_mots_differents);
+					printf("L'index contient %d mots au total.\n", index->nb_mots_total);
 
-//             break;
-//         }
-//         case 5:
-//         {
-//             /* Afficher les occurences d'un mot */
+					int equilibre= _check_balance(index->racine);
+					if(equilibre==1){
+						printf("L'index est équilibré.\n\n");
+					}
+					else{
+						printf("L'index n'est pas équilibré.\n\n");
+					}					
+				}
+				else {printf("Erreur. Aucun fichier n'a été importé.\n\n");}
+				break;
 
-//             break;
-//         }
-//         case 6:
-//         {
-//             /* Equilibrer l'index */
+			case 3 : //Afficher l'index
+				if(import!=0){
+					afficher_index(index);
+				}
+				else {printf("Erreur. Aucun fichier n'a été importé.\n\n");}
+				break;
 
-//             break;
-//         }
-//         case 7:
-//         {
-//             /* Quitter l'application + liberation des resources memoires */
+			case 4 : //Rechercher un mot
+				if(import!=0){
+					printf("Entrez le mot que vous recherchez :\n");
+					char motrecherche[MAX_WORD_LENTH];
+					scanf("%s", motrecherche);
 
-//             //on check si on a importé un fichier précédemment
-//             //if (instanceImport) libererRessource(instance);
-//             printf("Vous quittez l'application");
-//             break;
-//         }
-//         default:
-//             printf("Choix invalide !\n\n\n");
-//         }
-//     } while (uinput != 7);
-// }
+					t_Noeud *mottrouve=(t_Noeud *)malloc(sizeof(t_Noeud));
+					mottrouve=rechercher_mot(index, motrecherche);
+					if(mottrouve!=NULL){
+						printf("%s a été trouvé :\n", motrecherche);
+						printf("|\n");
+						t_Position *mottrouveposition=(t_Position *)malloc(sizeof(t_Position));
+						mottrouveposition=mottrouve->positions->debut;
+						while(mottrouveposition!=NULL){
+							printf("|-- Ligne %d, à la %d postion, dans la %d phrase.\n", mottrouveposition->numero_ligne, mottrouveposition->ordre_ligne, mottrouveposition->numero_phrase);
+							mottrouveposition=mottrouveposition->suivant;
+						}
+						printf("|\n");
+						free(mottrouveposition);
+					}
+					else{
+						printf("Erreur. Le mot %s n'a pas été trouvé. \n\n", motrecherche);
+						free(mottrouve);
+					}	
+		
+				}
+				else {printf("Erreur. Aucun fichier n'a été importé.\n\n");}					
+				break;
+
+			case 5 : //Afficher les occurences d'un mot
+				if(import!=0){
+					printf("Entrez le mot que vous recherchez :\n");
+					char motrecherche[MAX_WORD_LENTH];
+					scanf("%s", motrecherche);
+					afficher_occurence_mot(index, motrecherche);
+				}
+				else {printf("Erreur. Aucun fichier n'a été importé.\n\n");}
+				break;
+
+			case 6 : //Equilibrer l'index
+				if(import!=0){
+					if(equilibrer_index(index)==NULL){
+						printf("Erreur lors de la construction de l'index équilibré.\n\n");
+					}
+					else{
+						index=equilibrer_index(index);
+						printf("L'index est maintenant équilibré.\n\n");
+					}
+
+				}
+				else {printf("Erreur. Aucun fichier n'a été importé.\n\n");}
+				break;
+
+			case 7 : //Quitter et libérer la mémoire
+				if(import==0){
+					free(index);
+				}
+				else {
+					_free_tree(index->racine);
+					free(index);
+				}
+				printf("Au revoir ! \n");
+				break;
+
+			default : printf("Erreur de saisie. Veuillez entrez une option du programme.\n\n\n");
+		}
+
+	} while(choix!=7);
+}
