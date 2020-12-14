@@ -736,7 +736,7 @@ int _build_avl(t_Noeud **ptr_root, t_Index *index)
 void menuPrincipal(void)
 {
     int choix, import = 0;
-    t_Index *index = (t_Index *)malloc(sizeof(t_Index));
+    t_Index *index = (t_Index *)calloc(1, sizeof(t_Index));
 
     do
     {
@@ -858,13 +858,13 @@ void menuPrincipal(void)
         case 6: //Equilibrer l'index
             if (import != 0)
             {
-                if (equilibrer_index(index) == NULL)
+                index = equilibrer_index(index);
+                if (!index)
                 {
                     printf("Erreur lors de la construction de l'index équilibré.\n\n");
                 }
                 else
                 {
-                    index = equilibrer_index(index);
                     printf("L'index est maintenant équilibré.\n\n");
                 }
             }

@@ -4,8 +4,8 @@
 
 int main()
 {
-    // menuPrincipal();
-    // return 0;
+    menuPrincipal();
+    return 0;
 
     // test code
     t_Index *index = (t_Index *)calloc(1, sizeof(t_Index));
