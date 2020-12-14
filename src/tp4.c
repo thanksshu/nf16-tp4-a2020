@@ -157,7 +157,7 @@ void _add_node(t_Noeud **ptr_root, t_Noeud *new, int *result, int *self_grow, in
                          new->positions->debut->ordre_ligne,
                          new->positions->debut->ordre_phrase);
         // no longer need the new node, free it
-        _free_tree(new);
+        new = _free_tree(new);
 
         (*ptr_root)->nb_occurences += 1;
         // child tree didn't grow
@@ -351,7 +351,7 @@ int indexer_fichier(t_Index *index, char *file_name)
     // index already have a tree
     {
         // clean up old tree
-        _free_tree(index->racine);
+        index->racine = _free_tree(index->racine);
         index->nb_mots_differents = 0;
         index->nb_mots_total = 0;
     }
@@ -418,8 +418,10 @@ int indexer_fichier(t_Index *index, char *file_name)
                 if (!ajouter_noeud(index, node, 0))
                 // fail to add
                 {
-                    _free_tree(node);
-                    _free_tree(index->racine);
+                    if (node)
+                        node = _free_tree(node);
+                    if (index->racine)
+                        index->racine = _free_tree(index->racine);
                     index->nb_mots_differents = 0;
                     index->nb_mots_total = 0;
                     return 0;
@@ -455,7 +457,9 @@ int indexer_fichier(t_Index *index, char *file_name)
         else
         {
             // invalid word
-            _free_tree(index->racine);
+            if (index->racine)
+                index->racine = _free_tree(index->racine);
+            index->racine = NULL;
             index->nb_mots_differents = 0;
             index->nb_mots_total = 0;
             return 0;
@@ -469,32 +473,32 @@ int indexer_fichier(t_Index *index, char *file_name)
     return word_count;
 }
 
-void _free_tree(t_Noeud *node)
+t_Noeud *_free_tree(t_Noeud *node)
 {
-    if (!node)
-    // empty node, nothing to free
+    if (node)
+    // free node
     {
-        return;
+        // postfix traversal
+        // free left
+        node->filsGauche = _free_tree(node->filsGauche);
+        // free right
+        node->filsDroit = _free_tree(node->filsDroit);
+        // free self
+        // free mot
+        free(node->mot);
+        // free list position
+        t_Position *pos = node->positions->debut;
+        while (pos)
+        {
+            t_Position *temp_pos = pos->suivant;
+            free(pos);
+            pos = temp_pos;
+        }
+        free(node->positions);
+        free(node);
     }
-
-    // postfix traversal
-    // free left
-    _free_tree(node->filsGauche);
-    // free right
-    _free_tree(node->filsDroit);
-    // free self
-    // free mot
-    free(node->mot);
-    // free list position
-    t_Position *pos = node->positions->debut;
-    while (pos)
-    {
-        t_Position *temp_pos = pos->suivant;
-        free(pos);
-        pos = temp_pos;
-    }
-    free(node->positions);
-    free(node);
+    // after free or nothing to free
+    return NULL;
 }
 
 void afficher_index(t_Index *index)
@@ -678,7 +682,7 @@ t_Index *equilibrer_index(t_Index *index)
         return index_avl;
     }
     // build failed
-    _free_tree(index_avl->racine);
+    index_avl->racine = _free_tree(index_avl->racine);
     free(index_avl);
     return NULL;
 }
@@ -731,133 +735,162 @@ int _build_avl(t_Noeud **ptr_root, t_Index *index)
 
 void menuPrincipal(void)
 {
-    int choix, import= 0;
-	t_Index *index = (t_Index *)malloc(sizeof(t_Index));
-	
+    int choix, import = 0;
+    t_Index *index = (t_Index *)malloc(sizeof(t_Index));
 
-	do{
-		printf("______________Bienvenue______________\n");
-   		printf("1 - Charger un fichier\n");
-    		printf("2 - Caractéristiques de l'index\n");
-    		printf("3 - Afficher l'index\n");
-    		printf("4 - Rechercher un mot\n");
-    		printf("5 - Afficher les occurences d'un mot\n");
-    		printf("6 - Equilibrer l'index\n");
-    		printf("7 - Quitter\n");
-		
-		//We ask for the user to choose an option
-		scanf("%d", &choix);
-        	printf("\n\n");
-	
-		//We use a switch() to take care of the user's choice
-		switch(choix){
-			case 1 : //Charger un fichier
-				printf("Entrez le nom du fichier à indexer :\n");
-				char nomfichier[150];
-				scanf("%s", nomfichier);
-		
-				int nbmots = indexer_fichier(index, nomfichier);
+    do
+    {
+        printf("______________Bienvenue______________\n");
+        printf("1 - Charger un fichier\n");
+        printf("2 - Caractéristiques de l'index\n");
+        printf("3 - Afficher l'index\n");
+        printf("4 - Rechercher un mot\n");
+        printf("5 - Afficher les occurences d'un mot\n");
+        printf("6 - Equilibrer l'index\n");
+        printf("7 - Quitter\n");
 
-				if(nbmots!=0){
-					printf("Le fichier %s a été indéxé avec succès.\n", nomfichier);
-					printf("Il contient %d mots.\n\n", nbmots);
-					import=1;
-				}
-				else{
-					printf("Une erreur est survenue lors du chargement du fichier.\n\n");
-				}
-				
-				break;
+        //We ask for the user to choose an option
+        choix = 0;
+        scanf("%d", &choix);
+        printf("\n\n");
 
-			case 2 : //Caractéristiques de l'index
-				if(import!=0){
-					printf("L'index contient %d mots différents.\n", index->nb_mots_differents);
-					printf("L'index contient %d mots au total.\n", index->nb_mots_total);
+        //We use a switch() to take care of the user's choice
+        switch (choix)
+        {
+        case 1: //Charger un fichier
+            printf("Entrez le nom du fichier à indexer :\n");
+            char nomfichier[150];
+            scanf("%s", nomfichier);
 
-					int equilibre= _check_balance(index->racine);
-					if(equilibre==1){
-						printf("L'index est équilibré.\n\n");
-					}
-					else{
-						printf("L'index n'est pas équilibré.\n\n");
-					}					
-				}
-				else {printf("Erreur. Aucun fichier n'a été importé.\n\n");}
-				break;
+            int nbmots = indexer_fichier(index, nomfichier);
 
-			case 3 : //Afficher l'index
-				if(import!=0){
-					afficher_index(index);
-				}
-				else {printf("Erreur. Aucun fichier n'a été importé.\n\n");}
-				break;
+            if (nbmots != 0)
+            {
+                printf("Le fichier %s a été indéxé avec succès.\n", nomfichier);
+                printf("Il contient %d mots.\n\n", nbmots);
+                import = 1;
+            }
+            else
+            {
+                printf("Une erreur est survenue lors du chargement du fichier.\n\n");
+            }
 
-			case 4 : //Rechercher un mot
-				if(import!=0){
-					printf("Entrez le mot que vous recherchez :\n");
-					char motrecherche[MAX_WORD_LENTH];
-					scanf("%s", motrecherche);
+            break;
 
-					t_Noeud *mottrouve=(t_Noeud *)malloc(sizeof(t_Noeud));
-					mottrouve=rechercher_mot(index, motrecherche);
-					if(mottrouve!=NULL){
-						printf("%s a été trouvé :\n", motrecherche);
-						printf("|\n");
-						t_Position *mottrouveposition=(t_Position *)malloc(sizeof(t_Position));
-						mottrouveposition=mottrouve->positions->debut;
-						while(mottrouveposition!=NULL){
-							printf("|-- Ligne %d, à la %d postion, dans la %d phrase.\n", mottrouveposition->numero_ligne, mottrouveposition->ordre_ligne, mottrouveposition->numero_phrase);
-							mottrouveposition=mottrouveposition->suivant;
-						}
-						printf("|\n");
-						free(mottrouveposition);
-					}
-					else{
-						printf("Erreur. Le mot %s n'a pas été trouvé. \n\n", motrecherche);
-						free(mottrouve);
-					}	
-		
-				}
-				else {printf("Erreur. Aucun fichier n'a été importé.\n\n");}					
-				break;
+        case 2: //Caractéristiques de l'index
+            if (import != 0)
+            {
+                printf("L'index contient %d mots différents.\n", index->nb_mots_differents);
+                printf("L'index contient %d mots au total.\n", index->nb_mots_total);
 
-			case 5 : //Afficher les occurences d'un mot
-				if(import!=0){
-					printf("Entrez le mot que vous recherchez :\n");
-					char motrecherche[MAX_WORD_LENTH];
-					scanf("%s", motrecherche);
-					afficher_occurence_mot(index, motrecherche);
-				}
-				else {printf("Erreur. Aucun fichier n'a été importé.\n\n");}
-				break;
+                int equilibre = _check_balance(index->racine);
+                if (equilibre == 1)
+                {
+                    printf("L'index est équilibré.\n\n");
+                }
+                else
+                {
+                    printf("L'index n'est pas équilibré.\n\n");
+                }
+            }
+            else
+            {
+                printf("Erreur. Aucun fichier n'a été importé.\n\n");
+            }
+            break;
 
-			case 6 : //Equilibrer l'index
-				if(import!=0){
-					if(equilibrer_index(index)==NULL){
-						printf("Erreur lors de la construction de l'index équilibré.\n\n");
-					}
-					else{
-						index=equilibrer_index(index);
-						printf("L'index est maintenant équilibré.\n\n");
-					}
+        case 3: //Afficher l'index
+            if (import != 0)
+            {
+                afficher_index(index);
+            }
+            else
+            {
+                printf("Erreur. Aucun fichier n'a été importé.\n\n");
+            }
+            break;
 
-				}
-				else {printf("Erreur. Aucun fichier n'a été importé.\n\n");}
-				break;
+        case 4: //Rechercher un mot
+            if (import != 0)
+            {
+                printf("Entrez le mot que vous recherchez :\n");
+                char motrecherche[MAX_WORD_LENTH];
+                scanf("%s", motrecherche);
 
-			case 7 : //Quitter et libérer la mémoire
-				if(import==0){
-					free(index);
-				}
-				else {
-					_free_tree(index->racine);
-					free(index);
-				}
-				printf("Au revoir ! \n");
-				break;
+                t_Noeud *mottrouve = rechercher_mot(index, motrecherche);
+                if (mottrouve != NULL)
+                {
+                    printf("%s a été trouvé :\n", motrecherche);
+                    printf("|\n");
+                    t_Position *mottrouveposition = mottrouve->positions->debut;
+                    while (mottrouveposition != NULL)
+                    {
+                        printf("|-- Ligne %d, à la %d postion, dans la %d phrase.\n", mottrouveposition->numero_ligne, mottrouveposition->ordre_ligne, mottrouveposition->numero_phrase);
+                        mottrouveposition = mottrouveposition->suivant;
+                    }
+                    printf("|\n");
+                }
+                else
+                {
+                    printf("Erreur. Le mot %s n'a pas été trouvé. \n\n", motrecherche);
+                }
+            }
+            else
+            {
+                printf("Erreur. Aucun fichier n'a été importé.\n\n");
+            }
+            break;
 
-			default : printf("Erreur de saisie. Veuillez entrez une option du programme.\n\n\n");
-		}
+        case 5: //Afficher les occurences d'un mot
+            if (import != 0)
+            {
+                printf("Entrez le mot que vous recherchez :\n");
+                char motrecherche[MAX_WORD_LENTH];
+                scanf("%s", motrecherche);
+                afficher_occurence_mot(index, motrecherche);
+            }
+            else
+            {
+                printf("Erreur. Aucun fichier n'a été importé.\n\n");
+            }
+            break;
 
-	} while(choix!=7);
+        case 6: //Equilibrer l'index
+            if (import != 0)
+            {
+                if (equilibrer_index(index) == NULL)
+                {
+                    printf("Erreur lors de la construction de l'index équilibré.\n\n");
+                }
+                else
+                {
+                    index = equilibrer_index(index);
+                    printf("L'index est maintenant équilibré.\n\n");
+                }
+            }
+            else
+            {
+                printf("Erreur. Aucun fichier n'a été importé.\n\n");
+            }
+            break;
+
+        case 7: //Quitter et libérer la mémoire
+            if (import == 0)
+            {
+                free(index);
+            }
+            else
+            {
+                index->racine = _free_tree(index->racine);
+                free(index);
+            }
+            printf("Au revoir ! \n");
+            break;
+
+        default:
+            printf("Erreur de saisie. Veuillez entrez une option du programme.\n\n\n");
+            break;
+        }
+
+    } while (choix != 7);
 }

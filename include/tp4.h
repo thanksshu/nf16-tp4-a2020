@@ -62,6 +62,8 @@ void afficher_occurence_mot(t_Index *index, char *mot);
  */
 t_Index *equilibrer_index(t_Index *index);
 
+void menuPrincipal(void);
+
 /*===================*/
 /*| other functions |*/
 /*===================*/
@@ -69,7 +71,7 @@ t_Index *equilibrer_index(t_Index *index);
 /** free a tree with node as its root
  * @param node pointer of root node to start cleaning
  */
-void _free_tree(t_Noeud *node);
+t_Noeud *_free_tree(t_Noeud *node);
 
 /** add a node in a tree
  * @param ptr_root pointer of root node address to start being added
