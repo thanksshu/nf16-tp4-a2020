@@ -773,6 +773,7 @@ void menuPrincipal(void)
             else
             {
                 printf("Une erreur est survenue lors du chargement du fichier.\n\n");
+                import=0;
             }
 
             break;
