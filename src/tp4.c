@@ -759,7 +759,7 @@ void menuPrincipal(void)
         {
         case 1: //Charger un fichier
             printf("Entrez le nom du fichier à indexer :\n");
-            char nomfichier[150];
+            char nomfichier[150] = "\0";
             scanf("%s", nomfichier);
 
             int nbmots = indexer_fichier(index, nomfichier);

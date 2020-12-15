@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_WORD_LENTH 64
-#define MAX_PHRASE_LENTH 128
+#define MAX_WORD_LENTH 128
+#define MAX_PHRASE_LENTH 256
 
 typedef struct Position
 {
